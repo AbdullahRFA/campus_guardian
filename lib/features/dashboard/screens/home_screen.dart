@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:go_router/go_router.dart'; // <-- Import go_router
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -21,6 +21,18 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _selectedIndex = index;
     });
+
+    switch (index) {
+      case 0:
+      // Already on home, do nothing or context.go('/');
+        break;
+      case 1:
+        context.go('/mentors');
+        break;
+      case 2:
+        context.go('/profile');
+        break;
+    }
   }
 
   @override
