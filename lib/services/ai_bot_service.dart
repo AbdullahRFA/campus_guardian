@@ -1,19 +1,27 @@
 // lib/services/ai_bot_service.dart
 import 'dart:convert';
+import 'package:flutter/foundation.dart'; // Import for kDebugMode
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class AiBotService {
-  // Get the API key from the environment file
   final String? _apiKey = dotenv.env['GEMINI_API_KEY'];
 
   Future<String> getResponse(String query) async {
-    if (_apiKey == null) {
-      throw Exception("API key not found. Make sure you have a .env file.");
+    // --- TEMPORARY DEBUG STEP ---
+    // This will print the key to your console.
+    // REMOVE THIS LINE after we solve the problem.
+    if (kDebugMode) {
+      print("Using API Key: $_apiKey");
+    }
+    // ----------------------------
+
+    if (_apiKey == null || _apiKey!.isEmpty) {
+      return "Error: API key is missing. Check your .env file setup.";
     }
 
-    final url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$_apiKey";
-
+    // The corrected, confirmed URL
+    final url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$_apiKey";
     final body = {
       "contents": [
         {
@@ -33,15 +41,13 @@ class AiBotService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // Safely access the response text
         final text = data["candidates"]?[0]?["content"]?["parts"]?[0]?["text"];
         return text ?? "Sorry, I couldn't get a response. Please try again.";
       } else {
-        // Provide a more user-friendly error
-        return "Error: Failed to fetch response (Status code: ${response.statusCode})";
+        // This will now print the body of the error response from Google
+        return "Error: Failed to fetch response (Status code: ${response.statusCode})\nBody: ${response.body}";
       }
     } catch (e) {
-      // Handle network or other exceptions
       return "Error: An exception occurred - $e";
     }
   }
