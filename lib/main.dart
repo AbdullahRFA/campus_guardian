@@ -1,10 +1,15 @@
 import 'package:campus_guardian/core/app_theme.dart';
 import 'package:campus_guardian/core/app_routes.dart'; // <-- Import the routes
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env"); // Load the .env file
   runApp(const MyApp());
 }
+// void main() {
+//   runApp(const MyApp());
+// }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
