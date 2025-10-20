@@ -1,5 +1,5 @@
 import 'package:campus_guardian/core/app_theme.dart';
-import 'package:campus_guardian/features/dashboard/screens/home_screen.dart';
+import 'package:campus_guardian/core/app_routes.dart'; // <-- Import the routes
 import 'package:flutter/material.dart';
 
 void main() {
@@ -11,11 +11,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    // Change MaterialApp to MaterialApp.router
+    return MaterialApp.router(
       title: 'CampusGuardian',
-      theme: AppTheme.lightTheme, // <-- Applying your custom theme here!
+      theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: const HomeScreen(), // <-- Setting HomeScreen as the starting point!
+      // Use the routerConfig property
+      routerConfig: AppRoutes.router, // <-- Tell the app to use our router
     );
   }
 }
