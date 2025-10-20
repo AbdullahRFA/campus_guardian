@@ -6,6 +6,8 @@ class ChatScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // This AppBar will automatically show a back button
+      // because we navigated to this screen from another one.
       appBar: AppBar(
         title: const Text('JU KnowledgeBot'),
       ),

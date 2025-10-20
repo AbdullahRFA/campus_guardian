@@ -19,7 +19,7 @@ class MainShell extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Navigates to the chat screen when tapped
-          context.go('/chat');
+          context.push('/chat');
         },
         child: const Icon(Icons.auto_awesome),
       ),
