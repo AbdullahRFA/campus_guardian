@@ -1,3 +1,4 @@
+import 'package:campus_guardian/features/knowledgebot/screens/chat_screen.dart';
 import 'package:campus_guardian/features/dashboard/screens/home_screen.dart';
 import 'package:campus_guardian/features/mentorship/screens/mentor_list_screen.dart';
 import 'package:campus_guardian/features/profile/screens/profile_screen.dart';
@@ -71,7 +72,7 @@ class AppRoutes {
         routes: [
           GoRoute(
             path: '/',
-            builder: (context, state) => const DashboardScreen(), // Renamed for clarity
+            builder: (context, state) => const DashboardScreen(),
           ),
           GoRoute(
             path: '/mentors',
@@ -82,6 +83,12 @@ class AppRoutes {
             builder: (context, state) => const ProfileScreen(),
           ),
         ],
+      ),
+
+      // The new route for the chat screen, placed outside the ShellRoute
+      GoRoute(
+        path: '/chat',
+        builder: (context, state) => const ChatScreen(),
       ),
     ],
   );
