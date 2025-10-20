@@ -1,11 +1,10 @@
 import 'package:campus_guardian/features/knowledgebot/screens/chat_screen.dart';
-import 'package:campus_guardian/features/dashboard/screens/home_screen.dart';
 import 'package:campus_guardian/features/mentorship/screens/mentor_list_screen.dart';
 import 'package:campus_guardian/features/profile/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-// This is our main screen that holds the BottomNavigationBar
+// This is our main screen that holds the BottomNavigationBar and the FAB.
 // It's the "shell" for our other screens.
 class MainShell extends StatelessWidget {
   final Widget child;
@@ -13,11 +12,17 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // We get the current route to set the selected index of the nav bar
     int selectedIndex = _calculateSelectedIndex(context);
 
     return Scaffold(
       body: child, // The child will be our actual screen (Dashboard, Mentors, Profile)
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Navigates to the chat screen when tapped
+          context.go('/chat');
+        },
+        child: const Icon(Icons.auto_awesome),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedIndex,
         onTap: (index) => _onItemTapped(index, context),
@@ -30,7 +35,6 @@ class MainShell extends StatelessWidget {
     );
   }
 
-  // Helper method to determine the selected tab
   int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/mentors')) {
@@ -42,7 +46,6 @@ class MainShell extends StatelessWidget {
     return 0; // Default to Dashboard
   }
 
-  // Helper method for navigation
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
       case 0:
@@ -58,13 +61,14 @@ class MainShell extends StatelessWidget {
   }
 }
 
+// Manages all the navigation routes for the application.
 class AppRoutes {
   AppRoutes._();
 
   static final router = GoRouter(
     initialLocation: '/',
     routes: [
-      // This ShellRoute wraps our main screens with the MainShell (which has the BottomNavBar)
+      // This ShellRoute wraps our main screens with the MainShell.
       ShellRoute(
         builder: (context, state, child) {
           return MainShell(child: child);
@@ -85,7 +89,8 @@ class AppRoutes {
         ],
       ),
 
-      // The new route for the chat screen, placed outside the ShellRoute
+      // The route for the chat screen, placed outside the ShellRoute
+      // so it covers the whole screen, including the bottom navigation bar.
       GoRoute(
         path: '/chat',
         builder: (context, state) => const ChatScreen(),
@@ -94,8 +99,7 @@ class AppRoutes {
   );
 }
 
-// A simple dashboard screen to show in the shell
-// Found at the bottom of lib/core/app_routes.dart
+// The main dashboard screen that users see on launch.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
@@ -104,7 +108,6 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
-        // We can add action buttons here later, like notifications
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
@@ -114,45 +117,29 @@ class DashboardScreen extends StatelessWidget {
             icon: Icons.people_alt,
             title: 'Find a Mentor',
             subtitle: 'Connect with alumni & professors.',
-            onTap: () {
-              // We'll create this route in the next step
-              // context.go('/find-mentor');
-              print('Navigate to Find a Mentor');
-            },
+            onTap: () => print('Navigate to Find a Mentor'),
           ),
           _buildDashboardCard(
             context: context,
             icon: Icons.mic,
             title: 'Micro-Talks',
             subtitle: 'Listen to short knowledge sessions.',
-            onTap: () {
-              print('Navigate to Micro-Talks');
-            },
+            onTap: () => print('Navigate to Micro-Talks'),
           ),
           _buildDashboardCard(
             context: context,
             icon: Icons.swap_horiz,
             title: 'Skill Exchange',
             subtitle: 'Offer help and earn "Wisdom Credits".',
-            onTap: () {
-              print('Navigate to Skill Exchange');
-            },
+            onTap: () => print('Navigate to Skill Exchange'),
           ),
-          _buildDashboardCard(
-            context: context,
-            icon: Icons.auto_awesome,
-            title: 'JU KnowledgeBot',
-            subtitle: 'Ask the AI assistant for help.',
-            onTap: () {
-              print('Navigate to KnowledgeBot');
-            },
-          ),
+          // The old "JU KnowledgeBot" card has been removed from here.
         ],
       ),
     );
   }
 
-  // This is our reusable card builder function
+  // A reusable builder function for the dashboard cards.
   Widget _buildDashboardCard({
     required BuildContext context,
     required IconData icon,
