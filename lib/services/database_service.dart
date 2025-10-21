@@ -19,7 +19,9 @@ class DatabaseService {
   }
 
   // Add this method inside your DatabaseService class
+// NEW, CORRECTED VERSION
   Future<void> updateUserProfile(Map<String, dynamic> userData) async {
-    return await userCollection.doc(uid).update(userData);
+    // Use .set with SetOptions(merge: true)
+    return await userCollection.doc(uid).set(userData, SetOptions(merge: true));
   }
 }
