@@ -1,11 +1,11 @@
 import 'package:campus_guardian/features/auth/screens/auth_gate.dart';
-import 'package.campus_guardian/features/auth/screens/login_screen.dart';
-import 'package.campus_guardian/features/auth/screens/signup_screen.dart';
+import 'package:campus_guardian/features/auth/screens/login_screen.dart';
+import 'package:campus_guardian/features/auth/screens/signup_screen.dart';
 import 'package:campus_guardian/features/knowledgebot/screens/chat_screen.dart';
 import 'package:campus_guardian/features/mentorship/screens/mentor_list_screen.dart';
 import 'package:campus_guardian/features/profile/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
-import 'package.go_router/go_router.dart';
+import 'package:go_router/go_router.dart';
 
 // This is our main screen that holds the BottomNavigationBar and the FAB.
 // It's the "shell" for our other screens.
@@ -68,50 +68,44 @@ class AppRoutes {
   AppRoutes._();
 
   static final router = GoRouter(
-    // The initial location is now the root, which will show the AuthGate.
     initialLocation: '/',
     routes: [
-      // NEW: AuthGate is the new entry point of the app.
       GoRoute(
         path: '/',
         builder: (context, state) => const AuthGate(),
       ),
-      // NEW: Route for the Login screen.
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
       ),
-      // NEW: Route for the Signup screen.
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
       ),
 
-      // MODIFIED: The ShellRoute is now nested under the '/app' path.
-      // This means a user must be authenticated to access these screens.
+      // FIXED: The ShellRoute itself does not have a 'path' parameter.
+      // The paths are defined in the child GoRoutes below.
       ShellRoute(
-        path: '/app',
         builder: (context, state, child) {
           return MainShell(child: child);
         },
         routes: [
-          // MODIFIED: Routes inside the shell are now relative.
+          // MODIFIED: Each child route now has the full path.
           GoRoute(
-            path: 'dashboard', // Full path becomes /app/dashboard
+            path: '/app/dashboard',
             builder: (context, state) => const DashboardScreen(),
           ),
           GoRoute(
-            path: 'mentors', // Full path becomes /app/mentors
+            path: '/app/mentors',
             builder: (context, state) => const MentorListScreen(),
           ),
           GoRoute(
-            path: 'profile', // Full path becomes /app/profile
+            path: '/app/profile',
             builder: (context, state) => const ProfileScreen(),
           ),
         ],
       ),
 
-      // UNCHANGED: The chat route is still a top-level route.
       GoRoute(
         path: '/chat',
         builder: (context, state) => const ChatScreen(),
@@ -121,7 +115,6 @@ class AppRoutes {
 }
 
 // The main dashboard screen that users see on launch.
-// UNCHANGED: This widget's code does not need to be modified.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
