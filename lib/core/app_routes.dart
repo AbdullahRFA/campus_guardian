@@ -1,3 +1,6 @@
+import 'package:campus_guardian/features/auth/screens/auth_gate.dart';
+import 'package:campus_guardian/features/auth/screens/login_screen.dart';
+import 'package:campus_guardian/features/auth/screens/signup_screen.dart';
 import 'package:campus_guardian/features/knowledgebot/screens/chat_screen.dart';
 import 'package:campus_guardian/features/mentorship/screens/mentor_list_screen.dart';
 import 'package:campus_guardian/features/profile/screens/profile_screen.dart';
@@ -15,12 +18,9 @@ class MainShell extends StatelessWidget {
     int selectedIndex = _calculateSelectedIndex(context);
 
     return Scaffold(
-      body: child, // The child will be our actual screen (Dashboard, Mentors, Profile)
+      body: child,
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Navigates to the chat screen when tapped
-          context.push('/chat');
-        },
+        onPressed: () => context.push('/chat'),
         child: const Icon(Icons.auto_awesome),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -35,27 +35,29 @@ class MainShell extends StatelessWidget {
     );
   }
 
+  // MODIFIED: Helper method to determine the selected tab based on the new '/app' path
   int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
-    if (location.startsWith('/mentors')) {
+    if (location.startsWith('/app/mentors')) {
       return 1;
     }
-    if (location.startsWith('/profile')) {
+    if (location.startsWith('/app/profile')) {
       return 2;
     }
     return 0; // Default to Dashboard
   }
 
+  // MODIFIED: Helper method for navigation to the new '/app' paths
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
       case 0:
-        context.go('/');
+        context.go('/app/dashboard');
         break;
       case 1:
-        context.go('/mentors');
+        context.go('/app/mentors');
         break;
       case 2:
-        context.go('/profile');
+        context.go('/app/profile');
         break;
     }
   }
@@ -68,29 +70,42 @@ class AppRoutes {
   static final router = GoRouter(
     initialLocation: '/',
     routes: [
-      // This ShellRoute wraps our main screens with the MainShell.
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const AuthGate(),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/signup',
+        builder: (context, state) => const SignupScreen(),
+      ),
+
+      // FIXED: The ShellRoute itself does not have a 'path' parameter.
+      // The paths are defined in the child GoRoutes below.
       ShellRoute(
         builder: (context, state, child) {
           return MainShell(child: child);
         },
         routes: [
+          // MODIFIED: Each child route now has the full path.
           GoRoute(
-            path: '/',
+            path: '/app/dashboard',
             builder: (context, state) => const DashboardScreen(),
           ),
           GoRoute(
-            path: '/mentors',
+            path: '/app/mentors',
             builder: (context, state) => const MentorListScreen(),
           ),
           GoRoute(
-            path: '/profile',
+            path: '/app/profile',
             builder: (context, state) => const ProfileScreen(),
           ),
         ],
       ),
 
-      // The route for the chat screen, placed outside the ShellRoute
-      // so it covers the whole screen, including the bottom navigation bar.
       GoRoute(
         path: '/chat',
         builder: (context, state) => const ChatScreen(),
@@ -117,7 +132,7 @@ class DashboardScreen extends StatelessWidget {
             icon: Icons.people_alt,
             title: 'Find a Mentor',
             subtitle: 'Connect with alumni & professors.',
-            onTap: () => print('Navigate to Find a Mentor'),
+            onTap: () => context.go('/app/mentors'), // Go to the mentors screen
           ),
           _buildDashboardCard(
             context: context,
@@ -133,13 +148,11 @@ class DashboardScreen extends StatelessWidget {
             subtitle: 'Offer help and earn "Wisdom Credits".',
             onTap: () => print('Navigate to Skill Exchange'),
           ),
-          // The old "JU KnowledgeBot" card has been removed from here.
         ],
       ),
     );
   }
 
-  // A reusable builder function for the dashboard cards.
   Widget _buildDashboardCard({
     required BuildContext context,
     required IconData icon,
