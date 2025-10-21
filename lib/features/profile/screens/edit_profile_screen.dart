@@ -80,13 +80,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'facebookUrl': _facebookController.text.trim(),
       };
 
-      await DatabaseService(uid: user!.uid).updateUserProfile(updatedData);
+      // --- NEW: Added try-catch block for error handling ---
+      try {
+        await DatabaseService(uid: user!.uid).updateUserProfile(updatedData);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully!'), backgroundColor: Colors.green),
-        );
-        context.pop();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile updated successfully!'), backgroundColor: Colors.green),
+          );
+          context.pop(); // Go back to the profile screen
+        }
+      } catch (e) {
+        // If an error occurs, show it to the user
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to update profile: $e'), backgroundColor: Colors.red),
+          );
+        }
+      } finally {
+        // This will run whether the update succeeds or fails
+        if (mounted) {
+          setState(() => _isLoading = false); // Always turn off the spinner
+        }
       }
     }
   }

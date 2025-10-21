@@ -7,6 +7,8 @@ import 'package:campus_guardian/features/profile/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/profile/screens/edit_profile_screen.dart';
+
 // This is our main screen that holds the BottomNavigationBar and the FAB.
 // It's the "shell" for our other screens.
 class MainShell extends StatelessWidget {
@@ -99,9 +101,17 @@ class AppRoutes {
             path: '/app/mentors',
             builder: (context, state) => const MentorListScreen(),
           ),
+          // Find this GoRoute for '/app/profile'
           GoRoute(
             path: '/app/profile',
             builder: (context, state) => const ProfileScreen(),
+            // Add these nested routes
+            routes: [
+              GoRoute(
+                path: 'edit', // This creates the full path '/app/profile/edit'
+                builder: (context, state) => const EditProfileScreen(),
+              ),
+            ],
           ),
         ],
       ),
