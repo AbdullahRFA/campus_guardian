@@ -4,24 +4,25 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
-
-  @override
   Widget build(BuildContext context) {
+    final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Profile'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.edit),
+            tooltip: 'Edit Profile',
+            onPressed: () => context.push('/app/profile/edit'), // Navigate to Edit Screen
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
             onPressed: () {
               AuthService().signOut();
               context.go('/login');
@@ -30,43 +31,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       body: StreamBuilder<DocumentSnapshot>(
-        // Listen to real-time changes in the user's document
         stream: FirebaseFirestore.instance.collection('users').doc(currentUserId).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError) {
-            return const Center(child: Text('Something went wrong.'));
-          }
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return const Center(child: Text('User profile not found.'));
           }
 
-          // Extract data from the document
           var userData = snapshot.data!.data() as Map<String, dynamic>;
-          String fullName = userData['fullName'] ?? 'No Name';
-          String email = userData['email'] ?? 'No Email';
 
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Placeholder for profile picture
-                const CircleAvatar(
-                  radius: 50,
-                  child: Icon(Icons.person, size: 50),
+          return ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              Center(
+                child: Column(
+                  children: [
+                    const CircleAvatar(radius: 50, child: Icon(Icons.person, size: 50)),
+                    const SizedBox(height: 16),
+                    Text(userData['fullName'] ?? 'N/A', style: Theme.of(context).textTheme.headlineSmall),
+                    Text(userData['email'] ?? 'N/A', style: Theme.of(context).textTheme.bodyMedium),
+                    const SizedBox(height: 8),
+                    Text(userData['bio'] ?? 'No bio provided.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                Text(fullName, style: Theme.of(context).textTheme.headlineMedium),
-                const SizedBox(height: 8),
-                Text(email, style: Theme.of(context).textTheme.bodyLarge),
-                // We will add an "Edit Profile" button here tomorrow
-              ],
-            ),
+              ),
+              const Divider(height: 32),
+              _buildProfileInfoTile(Icons.school, 'Department', userData['department']),
+              _buildProfileInfoTile(Icons.group, 'Batch', userData['batch']),
+              _buildProfileInfoTile(Icons.format_list_numbered, 'Class Roll', userData['classRoll']),
+              _buildProfileInfoTile(Icons.phone, 'Phone', userData['phoneNumber']),
+              _buildProfileInfoTile(Icons.link, 'LinkedIn', userData['linkedinUrl']),
+              // Add more tiles for other fields as needed
+            ],
           );
         },
       ),
+    );
+  }
+
+  // Helper widget for a consistent look
+  Widget _buildProfileInfoTile(IconData icon, String title, String? subtitle) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(subtitle ?? 'Not set'),
     );
   }
 }
