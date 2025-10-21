@@ -1,3 +1,4 @@
+import 'package:campus_guardian/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../widgets/app_button.dart';
@@ -13,12 +14,32 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _handleSignIn() async {
+    setState(() => _isLoading = true);
+
+    final error = await _authService.signIn(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   @override
@@ -32,40 +53,23 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 60),
-            Text(
-              'Welcome Back!',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            Text('Welcome Back!', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 40),
-            AppTextField(
-              controller: _emailController,
-              labelText: 'Email Address',
-            ),
+            AppTextField(controller: _emailController, labelText: 'Email Address'),
             const SizedBox(height: 20),
-            AppTextField(
-              controller: _passwordController,
-              labelText: 'Password',
-              isObscure: true,
-            ),
+            AppTextField(controller: _passwordController, labelText: 'Password', isObscure: true),
             const SizedBox(height: 40),
             AppButton(
               text: 'Login',
-              onPressed: () {
-                // We'll add Firebase logic here tomorrow
-                print('Email: ${_emailController.text}');
-                print('Password: ${_passwordController.text}');
-              },
+              onPressed: _isLoading ? null : _handleSignIn,
             ),
+            if (_isLoading) const Center(child: Padding(padding: EdgeInsets.all(16.0), child: CircularProgressIndicator())),
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text("Don't have an account?"),
-                TextButton(
-                  onPressed: () => context.go('/signup'),
-                  child: const Text('Sign Up'),
-                ),
+                TextButton(onPressed: () => context.go('/signup'), child: const Text('Sign Up')),
               ],
             )
           ],
