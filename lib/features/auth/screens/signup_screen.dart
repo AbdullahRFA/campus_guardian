@@ -1,4 +1,6 @@
 import 'package:campus_guardian/services/auth_service.dart';
+import 'package:campus_guardian/services/database_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../widgets/app_button.dart';
@@ -12,6 +14,7 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  final _nameController = TextEditingController(); // <-- NEW
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
@@ -19,6 +22,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose(); // <-- NEW
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -27,26 +31,30 @@ class _SignupScreenState extends State<SignupScreen> {
   void _handleSignUp() async {
     setState(() => _isLoading = true);
 
-    final error = await _authService.signUp(
+    // 1. Create the user account
+    final User? user = await _authService.signUpAndGetUser(
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
     );
 
-    if (!mounted) return; // Check if the widget is still in the tree
+    if (user != null) {
+      // 2. Create the user document in Firestore
+      await DatabaseService(uid: user.uid).updateUserData(
+        _nameController.text.trim(),
+        _emailController.text.trim(),
+      );
+    }
+
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (error != null) {
-      // If there was an error, show it
+    if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Failed to create account.'), backgroundColor: Colors.red),
       );
     } else {
-      // SUCCESS! Show a success message and redirect.
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account created successfully! Please log in.'),
-          backgroundColor: Colors.green,
-        ),
+        const SnackBar(content: Text('Account created successfully! Please log in.'), backgroundColor: Colors.green),
       );
       context.go('/login');
     }
@@ -59,12 +67,13 @@ class _SignupScreenState extends State<SignupScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 60),
+            const SizedBox(height: 40),
             Text('Create Your Account', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 40),
+            AppTextField(controller: _nameController, labelText: 'Full Name'), // <-- NEW
+            const SizedBox(height: 20),
             AppTextField(controller: _emailController, labelText: 'Email Address'),
             const SizedBox(height: 20),
             AppTextField(controller: _passwordController, labelText: 'Password', isObscure: true),
@@ -74,7 +83,6 @@ class _SignupScreenState extends State<SignupScreen> {
               onPressed: _isLoading ? null : _handleSignUp,
             ),
             if (_isLoading) const Center(child: Padding(padding: EdgeInsets.all(16.0), child: CircularProgressIndicator())),
-            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
