@@ -24,6 +24,8 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // ... inside _LoginScreenState
+
   void _handleSignIn() async {
     setState(() => _isLoading = true);
 
@@ -32,13 +34,19 @@ class _LoginScreenState extends State<LoginScreen> {
       password: _passwordController.text.trim(),
     );
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      if (error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error), backgroundColor: Colors.red),
-        );
-      }
+    // We set isLoading to false after the await call, regardless of the outcome.
+    // This must be done before any navigation.
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (error != null) {
+      // If there was an error, show it
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: Colors.red),
+      );
+    } else {
+      // SUCCESS! Navigate to the main app dashboard.
+      context.go('/app/dashboard');
     }
   }
 
