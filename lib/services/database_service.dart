@@ -17,4 +17,9 @@ class DatabaseService {
       'batch': '',        // Example field
     });
   }
+
+  // Add this method inside your DatabaseService class
+  Future<void> updateUserProfile(Map<String, dynamic> userData) async {
+    return await userCollection.doc(uid).update(userData);
+  }
 }
