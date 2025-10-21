@@ -32,13 +32,23 @@ class _SignupScreenState extends State<SignupScreen> {
       password: _passwordController.text.trim(),
     );
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      if (error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error), backgroundColor: Colors.red),
-        );
-      }
+    if (!mounted) return; // Check if the widget is still in the tree
+    setState(() => _isLoading = false);
+
+    if (error != null) {
+      // If there was an error, show it
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: Colors.red),
+      );
+    } else {
+      // SUCCESS! Show a success message and redirect.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created successfully! Please log in.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      context.go('/login');
     }
   }
 
