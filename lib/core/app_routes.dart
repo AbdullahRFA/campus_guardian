@@ -13,6 +13,8 @@ import 'package:campus_guardian/features/mentorship/screens/mentor_detail_screen
 
 import 'package:campus_guardian/features/mentorship/screens/session_booking_screen.dart';
 
+import 'package:campus_guardian/features/profile/screens/edit_mentor_profile_screen.dart';
+
 // This is our main screen that holds the BottomNavigationBar and the FAB.
 // It's the "shell" for our other screens.
 class MainShell extends StatelessWidget {
@@ -156,6 +158,10 @@ class AppRoutes {
               GoRoute(
                 path: 'edit',
                 builder: (context, state) => const EditProfileScreen(),
+              ),
+              GoRoute(
+                path: 'edit-mentor', // This creates the full path '/app/profile/edit-mentor'
+                builder: (context, state) => const EditMentorProfileScreen(),
               ),
             ],
           ),
