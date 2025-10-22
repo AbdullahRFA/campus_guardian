@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // Import go_router to use context.pop()
 import '../../../widgets/app_button.dart';
 import '../models/mentor.dart';
 
@@ -91,7 +92,10 @@ class _SessionBookingScreenState extends State<SessionBookingScreen> {
               : () {
             // We'll add real booking logic later
             print('Booking confirmed for ${widget.mentor.name} at $_selectedSlot');
+
+            // This will now work correctly
             context.pop(); // Go back to the previous screen
+
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Session booked successfully!'),

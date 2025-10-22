@@ -11,6 +11,8 @@ import '../features/profile/screens/edit_profile_screen.dart';
 import 'package:campus_guardian/features/mentorship/models/mentor.dart';
 import 'package:campus_guardian/features/mentorship/screens/mentor_detail_screen.dart';
 
+import 'package:campus_guardian/features/mentorship/screens/session_booking_screen.dart';
+
 // This is our main screen that holds the BottomNavigationBar and the FAB.
 // It's the "shell" for our other screens.
 class MainShell extends StatelessWidget {
@@ -134,6 +136,16 @@ class AppRoutes {
                   final mentor = dummyMentors.firstWhere((m) => m.id == mentorId);
                   return MentorDetailScreen(mentor: mentor);
                 },
+                routes: [
+                  GoRoute(
+                    path: 'book', // Full path: /app/mentors/:mentorId/book
+                    builder: (context, state) {
+                      final mentorId = state.pathParameters['mentorId']!;
+                      final mentor = dummyMentors.firstWhere((m) => m.id == mentorId);
+                      return SessionBookingScreen(mentor: mentor);
+                    },
+                  ),
+                ],
               ),
             ],
           ),

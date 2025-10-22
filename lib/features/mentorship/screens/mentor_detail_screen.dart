@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../widgets/app_button.dart';
 import '../models/mentor.dart';
+import 'package:go_router/go_router.dart';
 
 class MentorDetailScreen extends StatelessWidget {
   final Mentor mentor;
@@ -88,6 +89,7 @@ class MentorDetailScreen extends StatelessWidget {
           text: 'Book a Session',
           onPressed: () {
             // We'll implement booking logic in a future step
+            context.go('/app/mentors/${mentor.id}/book');
             print('Booking a session with ${mentor.name}');
           },
         ),
