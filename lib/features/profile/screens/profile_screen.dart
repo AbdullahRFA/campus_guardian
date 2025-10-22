@@ -44,9 +44,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: const Icon(Icons.edit),
             tooltip: 'Edit Profile',
             onPressed: () async {
-              // After returning from edit, reload the local image path
+              // Wait for the edit screen to close
               await context.push('/app/profile/edit');
-              _loadLocalImage();
+
+              // After returning, trigger a rebuild to ensure the StreamBuilder
+              // fetches the absolute latest data.
+              if (mounted) {
+                setState(() {});
+              }
             },
           ),
           IconButton(

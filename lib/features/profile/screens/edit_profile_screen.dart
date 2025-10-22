@@ -11,7 +11,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -28,6 +27,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String _networkImageUrl = '';
   final _storageService = StorageService();
 
+  // Define all controllers
   final _fullNameController = TextEditingController();
   final _universityController = TextEditingController(text: "Jahangirnagar University");
   final _departmentController = TextEditingController();
@@ -47,34 +47,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _loadUserData();
   }
 
+  @override
+  void dispose() {
+    // Dispose all controllers to prevent memory leaks
+    _fullNameController.dispose();
+    _universityController.dispose();
+    _departmentController.dispose();
+    _sessionController.dispose();
+    _batchController.dispose();
+    _classRollController.dispose();
+    _bscCgpaController.dispose();
+    _mscCgpaController.dispose();
+    _phoneController.dispose();
+    _bioController.dispose();
+    _linkedinController.dispose();
+    _facebookController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      final data = doc.data();
-      if (data != null) {
-        _fullNameController.text = data['fullName'] ?? '';
-        _departmentController.text = data['department'] ?? '';
-        _sessionController.text = data['session'] ?? '';
-        _batchController.text = data['batch'] ?? '';
-        _classRollController.text = data['classRoll'] ?? '';
-        _bscCgpaController.text = data['bscCgpa'] ?? '';
-        _mscCgpaController.text = data['mscCgpa'] ?? '';
-        _phoneController.text = data['phoneNumber'] ?? '';
-        _bioController.text = data['bio'] ?? '';
-        _linkedinController.text = data['linkedinUrl'] ?? '';
-        _facebookController.text = data['facebookUrl'] ?? '';
-        setState(() {
-          _networkImageUrl = data['profilePicUrl'] ?? '';
-        });
-      }
+    if (user == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
     }
-    setState(() => _isLoading = false);
+
+    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final data = doc.data();
+
+    if (data != null && mounted) {
+      _fullNameController.text = data['fullName'] ?? '';
+      _departmentController.text = data['department'] ?? '';
+      _sessionController.text = data['session'] ?? '';
+      _batchController.text = data['batch'] ?? '';
+      _classRollController.text = data['classRoll'] ?? '';
+      _bscCgpaController.text = data['bscCgpa'] ?? '';
+      _mscCgpaController.text = data['mscCgpa'] ?? '';
+      _phoneController.text = data['phoneNumber'] ?? '';
+      _bioController.text = data['bio'] ?? '';
+      _linkedinController.text = data['linkedinUrl'] ?? '';
+      _facebookController.text = data['facebookUrl'] ?? '';
+      _networkImageUrl = data['profilePicUrl'] ?? '';
+    }
+
+    if (mounted) setState(() => _isLoading = false);
   }
 
   void _pickImage() async {
     final file = await _storageService.pickImage();
-    if (file != null) {
+    if (file != null && mounted) {
       setState(() {
         _imageFile = file;
       });
@@ -82,45 +103,57 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      final user = FirebaseAuth.instance.currentUser;
-      String finalImagePath = _networkImageUrl; // Start with the existing URL or path
+    if (!_formKey.currentState!.validate()) return;
 
-      // If a new image was picked, save its path locally
-      if (_imageFile != null) {
-        final prefs = await SharedPreferences.getInstance();
-        // On web, path is a blob:http URL. On mobile/desktop, it's a file path.
-        final localPath = _imageFile!.path;
-        await prefs.setString('profile_pic_path_${user!.uid}', localPath);
-        finalImagePath = localPath;
-      }
+    setState(() => _isLoading = true);
+    final user = FirebaseAuth.instance.currentUser!;
+    String finalImagePath = _networkImageUrl;
 
-      Map<String, dynamic> updatedData = {
-        // We will still save to Firestore, but our display logic will prioritize local storage
-        'profilePicUrl': finalImagePath,
-        'fullName': _fullNameController.text.trim(),
-        // ... (rest of your user data)
-      };
-
+    if (_imageFile != null && !kIsWeb) {
       try {
-        await DatabaseService(uid: user!.uid).updateUserProfile(updatedData);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile updated successfully!'), backgroundColor: Colors.green),
-          );
-          context.pop();
-        }
+        final directory = await getApplicationDocumentsDirectory();
+        final fileName = '${user.uid}_profile.jpg';
+        final savedImagePath = path.join(directory.path, fileName);
+        await File(_imageFile!.path).copy(savedImagePath);
+        finalImagePath = savedImagePath;
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to update profile: $e'), backgroundColor: Colors.red),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
+        // Handle error if image fails to save
+      }
+    }
+
+    Map<String, dynamic> updatedData = {
+      'profilePicUrl': finalImagePath,
+      'fullName': _fullNameController.text.trim(),
+      'university': _universityController.text.trim(),
+      'department': _departmentController.text.trim(),
+      'session': _sessionController.text.trim(),
+      'batch': _batchController.text.trim(),
+      'classRoll': _classRollController.text.trim(),
+      'bscCgpa': _bscCgpaController.text.trim(),
+      'mscCgpa': _mscCgpaController.text.trim(),
+      'phoneNumber': _phoneController.text.trim(),
+      'bio': _bioController.text.trim(),
+      'linkedinUrl': _linkedinController.text.trim(),
+      'facebookUrl': _facebookController.text.trim(),
+    };
+
+    try {
+      await DatabaseService(uid: user.uid).updateUserProfile(updatedData);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully!'), backgroundColor: Colors.green),
+        );
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update profile: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -142,31 +175,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   CircleAvatar(
                     radius: 60,
                     backgroundImage: _imageFile != null
-                        ? (kIsWeb
-                        ? NetworkImage(_imageFile!.path)
-                        : FileImage(File(_imageFile!.path))) as ImageProvider
+                        ? (kIsWeb ? NetworkImage(_imageFile!.path) : FileImage(File(_imageFile!.path))) as ImageProvider
                         : (_networkImageUrl.isNotEmpty
-                        ? (_networkImageUrl.startsWith('http')
-                        ? NetworkImage(_networkImageUrl)
-                        : FileImage(File(_networkImageUrl))) as ImageProvider
+                        ? (_networkImageUrl.startsWith('http') ? NetworkImage(_networkImageUrl) : FileImage(File(_networkImageUrl))) as ImageProvider
                         : null),
-                    child: _imageFile == null && _networkImageUrl.isEmpty
-                        ? const Icon(Icons.person, size: 60)
-                        : null,
+                    child: _imageFile == null && _networkImageUrl.isEmpty ? const Icon(Icons.person, size: 60) : null,
                   ),
                   Positioned(
                     bottom: 0,
                     right: 0,
-                    child: IconButton.filled(
-                      icon: const Icon(Icons.camera_alt),
-                      onPressed: _pickImage,
-                    ),
+                    child: IconButton.filled(icon: const Icon(Icons.camera_alt), onPressed: _pickImage),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 32),
-
             AppTextField(controller: _fullNameController, labelText: 'Full Name'),
             const SizedBox(height: 16),
             AppTextField(controller: _universityController, labelText: 'University'),
