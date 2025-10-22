@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -24,13 +25,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadLocalImage();
   }
 
-  // Load the saved image path from SharedPreferences
   Future<void> _loadLocalImage() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
         _localImagePath = prefs.getString('profile_pic_path_$currentUserId');
       });
+    }
+  }
+
+  Future<void> _launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch $urlString')),
+        );
+      }
     }
   }
 
@@ -44,14 +55,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: const Icon(Icons.edit),
             tooltip: 'Edit Profile',
             onPressed: () async {
-              // Wait for the edit screen to close
               await context.push('/app/profile/edit');
-
-              // After returning, trigger a rebuild to ensure the StreamBuilder
-              // fetches the absolute latest data.
-              if (mounted) {
-                setState(() {});
-              }
+              _loadLocalImage();
             },
           ),
           IconButton(
@@ -75,52 +80,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
 
           var userData = snapshot.data!.data() as Map<String, dynamic>;
-          String firestoreImageUrl = userData['profilePicUrl'] ?? '';
-
-          ImageProvider? backgroundImage;
-          // Priority 1: Use the freshly loaded local path
-          if (_localImagePath != null && _localImagePath!.isNotEmpty) {
-            if (kIsWeb) {
-              backgroundImage = NetworkImage(_localImagePath!); // For blob:http URL
-            } else {
-              backgroundImage = FileImage(File(_localImagePath!));
-            }
-          }
-          // Priority 2: Use the path from Firestore (fallback)
-          else if (firestoreImageUrl.isNotEmpty) {
-            if (firestoreImageUrl.startsWith('http')) {
-              backgroundImage = NetworkImage(firestoreImageUrl);
-            } else if (!kIsWeb) {
-              backgroundImage = FileImage(File(firestoreImageUrl));
-            }
-          }
 
           return ListView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             children: [
-              Center(
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: backgroundImage,
-                      child: backgroundImage == null ? const Icon(Icons.person, size: 50) : null,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(userData['fullName'] ?? 'N/A', style: Theme.of(context).textTheme.headlineSmall),
-                    Text(userData['email'] ?? 'N/A', style: Theme.of(context).textTheme.bodyMedium),
-                    const SizedBox(height: 8),
-                    Text(userData['bio'] ?? 'No bio provided.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
-                  ],
-                ),
+              _buildProfileHeader(context, userData),
+              const SizedBox(height: 16),
+              _buildInfoCard(
+                context,
+                title: 'Academic Details',
+                icon: Icons.school,
+                children: [
+                  _buildProfileInfoTile(Icons.business, 'University', userData['university']),
+                  _buildProfileInfoTile(Icons.bookmark, 'Department', userData['department']),
+                  _buildProfileInfoTile(Icons.timeline, 'Session', userData['session']),
+                  _buildProfileInfoTile(Icons.group, 'Batch', userData['batch']),
+                  _buildProfileInfoTile(Icons.format_list_numbered, 'Class Roll', userData['classRoll']),
+                  _buildProfileInfoTile(Icons.star, 'B.Sc CGPA', userData['bscCgpa']),
+                  _buildProfileInfoTile(Icons.star_border, 'M.Sc CGPA', userData['mscCgpa']),
+                ],
               ),
-              const Divider(height: 32),
-              _buildProfileInfoTile(Icons.school, 'Department', userData['department']),
-              _buildProfileInfoTile(Icons.group, 'Batch', userData['batch']),
-              _buildProfileInfoTile(Icons.format_list_numbered, 'Class Roll', userData['classRoll']),
-              _buildProfileInfoTile(Icons.phone, 'Phone', userData['phoneNumber']),
-              _buildProfileInfoTile(Icons.link, 'LinkedIn', userData['linkedinUrl']),
-              _buildProfileInfoTile(Icons.facebook, 'Facebook', userData['facebookUrl']),
+              const SizedBox(height: 16),
+              _buildInfoCard(
+                context,
+                title: 'Contact Information',
+                icon: Icons.contact_page,
+                children: [
+                  _buildProfileInfoTile(Icons.email, 'Email', userData['email']),
+                  _buildProfileInfoTile(Icons.phone, 'Phone', userData['phoneNumber']),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildInfoCard(
+                context,
+                title: 'Social Links',
+                icon: Icons.public,
+                children: [
+                  _buildSocialLinkTile(Icons.link, 'LinkedIn', userData['linkedinUrl']),
+                  _buildSocialLinkTile(Icons.facebook, 'Facebook', userData['facebookUrl']),
+                ],
+              ),
             ],
           );
         },
@@ -128,11 +127,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildProfileHeader(BuildContext context, Map<String, dynamic> userData) {
+    String firestoreImageUrl = userData['profilePicUrl'] ?? '';
+    ImageProvider? backgroundImage;
+
+    if (_localImagePath != null && _localImagePath!.isNotEmpty) {
+      backgroundImage = kIsWeb ? NetworkImage(_localImagePath!) : FileImage(File(_localImagePath!)) as ImageProvider;
+    } else if (firestoreImageUrl.isNotEmpty) {
+      backgroundImage = firestoreImageUrl.startsWith('http') ? NetworkImage(firestoreImageUrl) : (kIsWeb ? null : FileImage(File(firestoreImageUrl)) as ImageProvider);
+    }
+
+    return Card(
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 50,
+              backgroundImage: backgroundImage,
+              child: backgroundImage == null ? const Icon(Icons.person, size: 50) : null,
+            ),
+            const SizedBox(height: 16),
+            Text(userData['fullName'] ?? 'N/A', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(userData['email'] ?? 'N/A', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600])),
+            const SizedBox(height: 16),
+            Text(
+              userData['bio'] != null && userData['bio'].isNotEmpty ? userData['bio'] : 'No bio provided.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(BuildContext context, {required String title, required IconData icon, required List<Widget> children}) {
+    return Card(
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const Divider(height: 24),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildProfileInfoTile(IconData icon, String title, String? subtitle) {
+    final bool hasData = subtitle != null && subtitle.isNotEmpty;
     return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(subtitle != null && subtitle.isNotEmpty ? subtitle : 'Not set'),
+      leading: Icon(icon, size: 28, color: Colors.grey[500]),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
+      subtitle: Text(
+        hasData ? subtitle : 'Not set',
+        style: TextStyle(fontSize: 16, color: hasData ? Colors.black87 : Colors.grey),
+      ),
+    );
+  }
+
+  Widget _buildSocialLinkTile(IconData icon, String title, String? url) {
+    final bool hasUrl = url != null && url.isNotEmpty;
+    return ListTile(
+      leading: Icon(icon, size: 28, color: hasUrl ? Theme.of(context).colorScheme.primary : Colors.grey[500]),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
+      subtitle: Text(
+        hasUrl ? url : 'Not set',
+        style: TextStyle(fontSize: 14, color: hasUrl ? Colors.blue : Colors.grey, decoration: hasUrl ? TextDecoration.underline : null),
+        overflow: TextOverflow.ellipsis,
+      ),
+      onTap: hasUrl ? () => _launchURL(url) : null,
+      trailing: hasUrl ? const Icon(Icons.open_in_new, size: 20) : null,
     );
   }
 }
