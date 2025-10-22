@@ -42,7 +42,7 @@ class MentorCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${mentor.title} at ${mentor.company}',
+                            mentor.title,
                           style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                         ),
                       ],
