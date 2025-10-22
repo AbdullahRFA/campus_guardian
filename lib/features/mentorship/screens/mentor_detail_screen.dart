@@ -57,8 +57,9 @@ class MentorDetailScreen extends StatelessWidget {
                     style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
+                  // This is the new, dynamic text
                   Text(
-                    'A dedicated professional with over 10 years of experience in the field. Passionate about mentoring the next generation of leaders and innovators in the tech industry.', // Dummy bio text
+                    mentor.mentorBio.isNotEmpty ? mentor.mentorBio : 'No bio provided.',
                     style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
                   ),
                   const Divider(height: 32),
