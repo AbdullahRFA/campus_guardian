@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:campus_guardian/features/auth/screens/auth_gate.dart';
 import 'package:campus_guardian/features/auth/screens/login_screen.dart';
 import 'package:campus_guardian/features/auth/screens/signup_screen.dart';
@@ -8,15 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/profile/screens/edit_profile_screen.dart';
-import 'package:campus_guardian/features/mentorship/models/mentor.dart';
-import 'package:campus_guardian/features/mentorship/screens/mentor_detail_screen.dart';
+import '../features/mentorship/models/mentor.dart';
+import '../features/mentorship/screens/mentor_detail_screen.dart';
+// --- ADD THIS MISSING IMPORT ---
+import '../features/profile/screens/edit_mentor_profile_screen.dart';
 
-import 'package:campus_guardian/features/mentorship/screens/session_booking_screen.dart';
-
-import 'package:campus_guardian/features/profile/screens/edit_mentor_profile_screen.dart';
-
-// This is our main screen that holds the BottomNavigationBar and the FAB.
-// It's the "shell" for our other screens.
+// MainShell class remains the same
 class MainShell extends StatelessWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
@@ -51,7 +49,7 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('/app/profile')) {
       return 2;
     }
-    return 0; // Default to Dashboard
+    return 0;
   }
 
   void _onItemTapped(int index, BuildContext context) {
@@ -69,37 +67,8 @@ class MainShell extends StatelessWidget {
   }
 }
 
-// Manages all the navigation routes for the application.
 class AppRoutes {
   AppRoutes._();
-
-  // --- NEW: Dummy data for mentors, placed here to be accessible by the router ---
-  static final List<Mentor> dummyMentors = const [
-    const Mentor(
-      id: '1',
-      name: 'Dr. Md. Ezharul Islam',
-      title: 'Professor',
-      company: 'Jahangirnagar University',
-      profileImageUrl: 'https://via.placeholder.com/150/1976D2/FFFFFF?text=EI',
-      expertise: ['Machine Learning', 'AI', 'Research'],
-    ),
-    const Mentor(
-      id: '2',
-      name: 'Samsun Nahar Khandakar',
-      title: 'Assistant Professor',
-      company: 'Jahangirnagar University',
-      profileImageUrl: 'https://via.placeholder.com/150/42A5F5/FFFFFF?text=SN',
-      expertise: ['Data Structures', 'Algorithms', 'Web Dev'],
-    ),
-    const Mentor(
-      id: '3',
-      name: 'Ahsin Abid',
-      title: 'Lead Engineer',
-      company: 'Samsung Research',
-      profileImageUrl: 'https://via.placeholder.com/150/0D47A1/FFFFFF?text=AA',
-      expertise: ['Mobile Dev', 'Flutter', 'Career Growth'],
-    ),
-  ];
 
   static final router = GoRouter(
     initialLocation: '/',
@@ -125,29 +94,36 @@ class AppRoutes {
             path: '/app/dashboard',
             builder: (context, state) => const DashboardScreen(),
           ),
-          // --- MODIFIED: The /app/mentors route now has a nested route for details ---
           GoRoute(
             path: '/app/mentors',
-            builder: (context, state) => MentorListScreen(mentors: dummyMentors), // Pass the data to the list screen
+            builder: (context, state) => const MentorListScreen(),
             routes: [
               GoRoute(
-                path: ':mentorId', // This creates a dynamic path like /app/mentors/1
-                builder: (context, state) {
-                  // Find the mentor whose ID matches the one in the URL
-                  final mentorId = state.pathParameters['mentorId']!;
-                  final mentor = dummyMentors.firstWhere((m) => m.id == mentorId);
-                  return MentorDetailScreen(mentor: mentor);
-                },
-                routes: [
-                  GoRoute(
-                    path: 'book', // Full path: /app/mentors/:mentorId/book
-                    builder: (context, state) {
-                      final mentorId = state.pathParameters['mentorId']!;
-                      final mentor = dummyMentors.firstWhere((m) => m.id == mentorId);
-                      return SessionBookingScreen(mentor: mentor);
-                    },
-                  ),
-                ],
+                  path: ':mentorId',
+                  builder: (context, state) {
+                    final mentorId = state.pathParameters['mentorId']!;
+                    return FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance.collection('users').doc(mentorId).get(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                        }
+                        if (!snapshot.hasData || !snapshot.data!.exists) {
+                          return const Scaffold(body: Center(child: Text('Mentor not found.')));
+                        }
+                        final mentor = Mentor.fromFirestore(snapshot.data!);
+                        return MentorDetailScreen(mentor: mentor);
+                      },
+                    );
+                  },
+                  routes: [
+                    GoRoute(
+                      path: 'book',
+                      builder: (context, state) {
+                        return const Scaffold(body: Center(child: Text("Booking will be implemented here.")));
+                      },
+                    ),
+                  ]
               ),
             ],
           ),
@@ -160,7 +136,7 @@ class AppRoutes {
                 builder: (context, state) => const EditProfileScreen(),
               ),
               GoRoute(
-                path: 'edit-mentor', // This creates the full path '/app/profile/edit-mentor'
+                path: 'edit-mentor',
                 builder: (context, state) => const EditMentorProfileScreen(),
               ),
             ],
@@ -175,7 +151,7 @@ class AppRoutes {
   );
 }
 
-// The main dashboard screen that users see on launch.
+// DashboardScreen class remains the same
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 

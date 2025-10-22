@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../widgets/app_button.dart';
 import '../models/mentor.dart';
-import 'package:go_router/go_router.dart';
 
 class MentorDetailScreen extends StatelessWidget {
   final Mentor mentor;
@@ -28,7 +28,8 @@ class MentorDetailScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundImage: NetworkImage(mentor.profileImageUrl),
+                    backgroundImage: mentor.profileImageUrl.isNotEmpty ? NetworkImage(mentor.profileImageUrl) : null,
+                    child: mentor.profileImageUrl.isEmpty ? const Icon(Icons.person, size: 50) : null,
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -36,8 +37,9 @@ class MentorDetailScreen extends StatelessWidget {
                     style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
+                  // FIXED: Changed from mentor.company to just mentor.title
                   Text(
-                    '${mentor.title} at ${mentor.company}',
+                    mentor.title,
                     style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
                   ),
                 ],
@@ -88,9 +90,7 @@ class MentorDetailScreen extends StatelessWidget {
         child: AppButton(
           text: 'Book a Session',
           onPressed: () {
-            // We'll implement booking logic in a future step
             context.go('/app/mentors/${mentor.id}/book');
-            print('Booking a session with ${mentor.name}');
           },
         ),
       ),
