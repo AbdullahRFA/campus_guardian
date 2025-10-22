@@ -103,6 +103,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
               _buildInfoCard(
                 context,
+                title: 'Mentorship',
+                icon: Icons.people_outline,
+                children: [
+                  ListTile(
+                    title: const Text("Manage Your Mentor Profile"),
+                    subtitle: const Text("Set your availability and expertise"),
+                    trailing: const Icon(Icons.arrow_forward_ios),
+                    onTap: () => context.push('/app/profile/edit-mentor'),
+                  )
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildInfoCard(
+                context,
                 title: 'Contact Information',
                 icon: Icons.contact_page,
                 children: [
