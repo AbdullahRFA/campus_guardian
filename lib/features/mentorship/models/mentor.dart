@@ -6,7 +6,8 @@ class Mentor {
   final String profileImageUrl;
   final List<String> expertise;
 
-  Mentor({
+  // Add 'const' here
+  const Mentor({
     required this.id,
     required this.name,
     required this.title,
