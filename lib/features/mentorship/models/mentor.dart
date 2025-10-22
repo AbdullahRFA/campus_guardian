@@ -6,6 +6,7 @@ class Mentor {
   final String title;
   final String profileImageUrl;
   final List<String> expertise;
+  final String mentorBio; // NEW: Added mentorBio
 
   const Mentor({
     required this.id,
@@ -13,9 +14,9 @@ class Mentor {
     required this.title,
     required this.profileImageUrl,
     required this.expertise,
+    required this.mentorBio, // NEW: Added to constructor
   });
 
-  // NEW: A factory constructor to create a Mentor from a Firestore document
   factory Mentor.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return Mentor(
@@ -24,6 +25,7 @@ class Mentor {
       title: data['mentorTitle'] ?? 'Mentor',
       profileImageUrl: data['profilePicUrl'] ?? '',
       expertise: List<String>.from(data['mentorExpertise'] ?? []),
+      mentorBio: data['mentorBio'] ?? '', // NEW: Get bio from Firestore
     );
   }
 }

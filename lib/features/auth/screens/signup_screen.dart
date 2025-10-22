@@ -72,8 +72,8 @@ class _SignupScreenState extends State<SignupScreen> {
             const SizedBox(height: 40),
             Text('Create Your Account', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 40),
-            AppTextField(controller: _nameController, labelText: 'Full Name'), // <-- NEW
-            const SizedBox(height: 20),
+            // AppTextField(controller: _nameController, labelText: 'Full Name'), // <-- NEW
+            // const SizedBox(height: 20),
             AppTextField(controller: _emailController, labelText: 'Email Address'),
             const SizedBox(height: 20),
             AppTextField(controller: _passwordController, labelText: 'Password', isObscure: true),
