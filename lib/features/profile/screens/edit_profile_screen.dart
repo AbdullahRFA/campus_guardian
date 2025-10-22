@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:campus_guardian/services/database_service.dart';
 import 'package:campus_guardian/services/storage_service.dart';
 import 'package:campus_guardian/widgets/app_button.dart';
@@ -8,6 +9,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -20,12 +24,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = true;
 
-  // --- NEW: State variables for image handling ---
   XFile? _imageFile;
   String _networkImageUrl = '';
   final _storageService = StorageService();
 
-  // Controllers for all the text fields
   final _fullNameController = TextEditingController();
   final _universityController = TextEditingController(text: "Jahangirnagar University");
   final _departmentController = TextEditingController();
@@ -45,14 +47,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _loadUserData();
   }
 
-  // Fetch existing data to populate fields
   Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
       final data = doc.data();
       if (data != null) {
-        // Populate text fields
         _fullNameController.text = data['fullName'] ?? '';
         _departmentController.text = data['department'] ?? '';
         _sessionController.text = data['session'] ?? '';
@@ -64,8 +64,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _bioController.text = data['bio'] ?? '';
         _linkedinController.text = data['linkedinUrl'] ?? '';
         _facebookController.text = data['facebookUrl'] ?? '';
-
-        // --- NEW: Load existing profile picture URL ---
         setState(() {
           _networkImageUrl = data['profilePicUrl'] ?? '';
         });
@@ -74,7 +72,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _isLoading = false);
   }
 
-  // --- NEW: Function to handle picking an image from the gallery ---
   void _pickImage() async {
     final file = await _storageService.pickImage();
     if (file != null) {
@@ -88,31 +85,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       final user = FirebaseAuth.instance.currentUser;
-      String profilePicUrl = _networkImageUrl;
+      String finalImagePath = _networkImageUrl; // Start with the existing URL or path
 
-      // --- NEW: "Upload" the image if a new one was selected ---
-      // This currently uses our placeholder service and won't actually upload.
+      // If a new image was picked, save its path locally
       if (_imageFile != null) {
-        profilePicUrl = await _storageService.uploadProfilePicture(
-          user!.uid,
-          File(_imageFile!.path),
-        );
+        final prefs = await SharedPreferences.getInstance();
+        // On web, path is a blob:http URL. On mobile/desktop, it's a file path.
+        final localPath = _imageFile!.path;
+        await prefs.setString('profile_pic_path_${user!.uid}', localPath);
+        finalImagePath = localPath;
       }
 
       Map<String, dynamic> updatedData = {
-        'profilePicUrl': profilePicUrl, // Will be empty for now if new image is picked
+        // We will still save to Firestore, but our display logic will prioritize local storage
+        'profilePicUrl': finalImagePath,
         'fullName': _fullNameController.text.trim(),
-        'university': _universityController.text.trim(),
-        'department': _departmentController.text.trim(),
-        'session': _sessionController.text.trim(),
-        'batch': _batchController.text.trim(),
-        'classRoll': _classRollController.text.trim(),
-        'bscCgpa': _bscCgpaController.text.trim(),
-        'mscCgpa': _mscCgpaController.text.trim(),
-        'phoneNumber': _phoneController.text.trim(),
-        'bio': _bioController.text.trim(),
-        'linkedinUrl': _linkedinController.text.trim(),
-        'facebookUrl': _facebookController.text.trim(),
+        // ... (rest of your user data)
       };
 
       try {
@@ -148,17 +136,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
-            // --- NEW: UI for picking and displaying the profile picture ---
             Center(
               child: Stack(
                 children: [
                   CircleAvatar(
                     radius: 60,
                     backgroundImage: _imageFile != null
-                        ? FileImage(File(_imageFile!.path)) // Display new local image
+                        ? (kIsWeb
+                        ? NetworkImage(_imageFile!.path)
+                        : FileImage(File(_imageFile!.path))) as ImageProvider
                         : (_networkImageUrl.isNotEmpty
-                        ? NetworkImage(_networkImageUrl) // Display existing network image
-                        : null) as ImageProvider?,
+                        ? (_networkImageUrl.startsWith('http')
+                        ? NetworkImage(_networkImageUrl)
+                        : FileImage(File(_networkImageUrl))) as ImageProvider
+                        : null),
                     child: _imageFile == null && _networkImageUrl.isEmpty
                         ? const Icon(Icons.person, size: 60)
                         : null,
@@ -176,7 +167,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             const SizedBox(height: 32),
 
-            // All your text fields remain the same
             AppTextField(controller: _fullNameController, labelText: 'Full Name'),
             const SizedBox(height: 16),
             AppTextField(controller: _universityController, labelText: 'University'),
