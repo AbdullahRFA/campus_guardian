@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/profile/screens/edit_profile_screen.dart';
+import 'package:campus_guardian/features/mentorship/models/mentor.dart';
+import 'package:campus_guardian/features/mentorship/screens/mentor_detail_screen.dart';
 
 // This is our main screen that holds the BottomNavigationBar and the FAB.
 // It's the "shell" for our other screens.
@@ -37,7 +39,6 @@ class MainShell extends StatelessWidget {
     );
   }
 
-  // MODIFIED: Helper method to determine the selected tab based on the new '/app' path
   int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/app/mentors')) {
@@ -49,7 +50,6 @@ class MainShell extends StatelessWidget {
     return 0; // Default to Dashboard
   }
 
-  // MODIFIED: Helper method for navigation to the new '/app' paths
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
       case 0:
@@ -69,6 +69,34 @@ class MainShell extends StatelessWidget {
 class AppRoutes {
   AppRoutes._();
 
+  // --- NEW: Dummy data for mentors, placed here to be accessible by the router ---
+  static final List<Mentor> dummyMentors = const [
+    const Mentor(
+      id: '1',
+      name: 'Dr. Md. Ezharul Islam',
+      title: 'Professor',
+      company: 'Jahangirnagar University',
+      profileImageUrl: 'https://via.placeholder.com/150/1976D2/FFFFFF?text=EI',
+      expertise: ['Machine Learning', 'AI', 'Research'],
+    ),
+    const Mentor(
+      id: '2',
+      name: 'Samsun Nahar Khandakar',
+      title: 'Assistant Professor',
+      company: 'Jahangirnagar University',
+      profileImageUrl: 'https://via.placeholder.com/150/42A5F5/FFFFFF?text=SN',
+      expertise: ['Data Structures', 'Algorithms', 'Web Dev'],
+    ),
+    const Mentor(
+      id: '3',
+      name: 'Ahsin Abid',
+      title: 'Lead Engineer',
+      company: 'Samsung Research',
+      profileImageUrl: 'https://via.placeholder.com/150/0D47A1/FFFFFF?text=AA',
+      expertise: ['Mobile Dev', 'Flutter', 'Career Growth'],
+    ),
+  ];
+
   static final router = GoRouter(
     initialLocation: '/',
     routes: [
@@ -84,38 +112,43 @@ class AppRoutes {
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
       ),
-
-      // FIXED: The ShellRoute itself does not have a 'path' parameter.
-      // The paths are defined in the child GoRoutes below.
       ShellRoute(
         builder: (context, state, child) {
           return MainShell(child: child);
         },
         routes: [
-          // MODIFIED: Each child route now has the full path.
           GoRoute(
             path: '/app/dashboard',
             builder: (context, state) => const DashboardScreen(),
           ),
+          // --- MODIFIED: The /app/mentors route now has a nested route for details ---
           GoRoute(
             path: '/app/mentors',
-            builder: (context, state) => const MentorListScreen(),
+            builder: (context, state) => MentorListScreen(mentors: dummyMentors), // Pass the data to the list screen
+            routes: [
+              GoRoute(
+                path: ':mentorId', // This creates a dynamic path like /app/mentors/1
+                builder: (context, state) {
+                  // Find the mentor whose ID matches the one in the URL
+                  final mentorId = state.pathParameters['mentorId']!;
+                  final mentor = dummyMentors.firstWhere((m) => m.id == mentorId);
+                  return MentorDetailScreen(mentor: mentor);
+                },
+              ),
+            ],
           ),
-          // Find this GoRoute for '/app/profile'
           GoRoute(
             path: '/app/profile',
             builder: (context, state) => const ProfileScreen(),
-            // Add these nested routes
             routes: [
               GoRoute(
-                path: 'edit', // This creates the full path '/app/profile/edit'
+                path: 'edit',
                 builder: (context, state) => const EditProfileScreen(),
               ),
             ],
           ),
         ],
       ),
-
       GoRoute(
         path: '/chat',
         builder: (context, state) => const ChatScreen(),
@@ -142,7 +175,7 @@ class DashboardScreen extends StatelessWidget {
             icon: Icons.people_alt,
             title: 'Find a Mentor',
             subtitle: 'Connect with alumni & professors.',
-            onTap: () => context.go('/app/mentors'), // Go to the mentors screen
+            onTap: () => context.go('/app/mentors'),
           ),
           _buildDashboardCard(
             context: context,

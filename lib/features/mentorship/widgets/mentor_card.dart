@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // Import the go_router package
 import '../models/mentor.dart';
 
 class MentorCard extends StatelessWidget {
@@ -15,8 +16,8 @@ class MentorCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          // We'll navigate to the mentor's detail page later
-          print('Tapped on mentor: ${mentor.name}');
+          // MODIFIED: Navigate to the detail screen using the mentor's ID
+          context.go('/app/mentors/${mentor.id}');
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
