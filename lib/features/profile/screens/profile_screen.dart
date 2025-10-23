@@ -8,6 +8,10 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// NEW: Import the Session model and the new SessionHistoryCard widget
+import 'package:campus_guardian/features/mentorship/models/session.dart';
+import 'package:campus_guardian/features/profile/widgets/session_history_card.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -71,15 +75,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance.collection('users').doc(currentUserId).snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+        builder: (context, userSnapshot) {
+          if (userSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || !snapshot.data!.exists) {
+          if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
             return const Center(child: Text('User profile not found.'));
           }
 
-          var userData = snapshot.data!.data() as Map<String, dynamic>;
+          var userData = userSnapshot.data!.data() as Map<String, dynamic>;
 
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -132,6 +136,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   _buildSocialLinkTile(Icons.link, 'LinkedIn', userData['linkedinUrl']),
                   _buildSocialLinkTile(Icons.facebook, 'Facebook', userData['facebookUrl']),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // --- NEW: Session History Card ---
+              _buildInfoCard(
+                context,
+                title: 'Session History & Feedback',
+                icon: Icons.history,
+                children: [
+                  StreamBuilder<QuerySnapshot>(
+                    // Query for completed sessions where the user was a participant
+                    stream: FirebaseFirestore.instance
+                        .collection('sessions')
+                        .where('participants', arrayContains: currentUserId)
+                        .where('status', isEqualTo: 'completed')
+                        .orderBy('createdAt', descending: true)
+                        .snapshots(),
+                    builder: (context, sessionSnapshot) {
+                      if (sessionSnapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
+                      }
+                      if (sessionSnapshot.hasError) {
+                        return Center(child: Text('Error: ${sessionSnapshot.error}'));
+                      }
+                      if (!sessionSnapshot.hasData || sessionSnapshot.data!.docs.isEmpty) {
+                        return const Center(child: Padding(padding: EdgeInsets.all(16.0), child: Text('No completed sessions yet.')));
+                      }
+
+                      return Column(
+                        children: sessionSnapshot.data!.docs.map((doc) {
+                          final session = Session.fromFirestore(doc);
+                          return SessionHistoryCard(session: session);
+                        }).toList(),
+                      );
+                    },
+                  ),
                 ],
               ),
             ],

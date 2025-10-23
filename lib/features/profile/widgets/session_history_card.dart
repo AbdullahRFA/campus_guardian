@@ -16,7 +16,10 @@ class SessionHistoryCard extends StatelessWidget {
     final rating = isUserTheMentor ? session.menteeRating : session.mentorRating;
     final otherPerson = isUserTheMentor ? session.menteeName : session.mentorName;
 
-    if (feedback == null || feedback.isEmpty) return const SizedBox.shrink();
+    // Don't show anything if there's no feedback for this session
+    if (feedback == null || feedback.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Card(
       elevation: 0,
