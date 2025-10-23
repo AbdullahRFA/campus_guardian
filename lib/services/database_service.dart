@@ -12,6 +12,7 @@ class DatabaseService {
     await userCollection.doc(uid).set(userData, SetOptions(merge: true));
   }
 
+// Inside the DatabaseService class
   Future<void> bookSession({
     required String mentorId,
     required String menteeId,
@@ -19,7 +20,6 @@ class DatabaseService {
     required String menteeName,
     required String sessionTime,
   }) async {
-    // FIXED: Removed the 'return' keyword.
     await sessionCollection.add({
       'mentorId': mentorId,
       'menteeId': menteeId,
@@ -29,6 +29,8 @@ class DatabaseService {
       'sessionDate': DateTime.now().toIso8601String().split('T').first,
       'status': 'confirmed',
       'createdAt': FieldValue.serverTimestamp(),
+      // --- ADD THIS LINE ---
+      'participants': [mentorId, menteeId], // An array of both user IDs
     });
   }
 }
