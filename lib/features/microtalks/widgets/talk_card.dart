@@ -1,4 +1,4 @@
-import 'package.flutter/material.dart';
+import 'package:flutter/material.dart'; // FIXED: Changed 'package.' to 'package:'
 import '../models/talk.dart';
 
 class TalkCard extends StatelessWidget {
@@ -12,16 +12,14 @@ class TalkCard extends StatelessWidget {
       elevation: 2.0,
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias, // Ensures the InkWell ripple stays within the rounded corners
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-          // We'll navigate to a player screen later
           print('Tapped on talk: ${talk.title}');
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Thumbnail with play icon
             Stack(
               alignment: Alignment.center,
               children: [
@@ -34,7 +32,6 @@ class TalkCard extends StatelessWidget {
                 Icon(Icons.play_circle_fill, color: Colors.white.withOpacity(0.8), size: 60),
               ],
             ),
-            // Talk details
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
