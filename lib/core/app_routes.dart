@@ -11,8 +11,8 @@ import 'package:go_router/go_router.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/mentorship/models/mentor.dart';
 import '../features/mentorship/screens/mentor_detail_screen.dart';
-// --- ADD THIS MISSING IMPORT ---
 import '../features/profile/screens/edit_mentor_profile_screen.dart';
+import '../features/mentorship/screens/session_booking_screen.dart';
 
 // MainShell class remains the same
 class MainShell extends StatelessWidget {
@@ -99,31 +99,47 @@ class AppRoutes {
             builder: (context, state) => const MentorListScreen(),
             routes: [
               GoRoute(
-                  path: ':mentorId',
-                  builder: (context, state) {
-                    final mentorId = state.pathParameters['mentorId']!;
-                    return FutureBuilder<DocumentSnapshot>(
-                      future: FirebaseFirestore.instance.collection('users').doc(mentorId).get(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Scaffold(body: Center(child: CircularProgressIndicator()));
-                        }
-                        if (!snapshot.hasData || !snapshot.data!.exists) {
-                          return const Scaffold(body: Center(child: Text('Mentor not found.')));
-                        }
-                        final mentor = Mentor.fromFirestore(snapshot.data!);
-                        return MentorDetailScreen(mentor: mentor);
-                      },
-                    );
-                  },
-                  routes: [
-                    GoRoute(
-                      path: 'book',
-                      builder: (context, state) {
-                        return const Scaffold(body: Center(child: Text("Booking will be implemented here.")));
-                      },
-                    ),
-                  ]
+                path: ':mentorId',
+                builder: (context, state) {
+                  final mentorId = state.pathParameters['mentorId']!;
+                  return FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance.collection('users').doc(mentorId).get(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                      }
+                      if (!snapshot.hasData || !snapshot.data!.exists) {
+                        return const Scaffold(body: Center(child: Text('Mentor not found.')));
+                      }
+                      final mentor = Mentor.fromFirestore(snapshot.data!);
+                      return MentorDetailScreen(mentor: mentor);
+                    },
+                  );
+                },
+                routes: [
+                  // --- THIS IS THE CORRECTED ROUTE ---
+                  GoRoute(
+                    path: 'book',
+                    builder: (context, state) {
+                      final mentorId = state.pathParameters['mentorId']!;
+                      // Use a FutureBuilder to fetch the mentor data
+                      return FutureBuilder<DocumentSnapshot>(
+                        future: FirebaseFirestore.instance.collection('users').doc(mentorId).get(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                          }
+                          if (!snapshot.hasData || !snapshot.data!.exists) {
+                            return const Scaffold(body: Center(child: Text('Mentor not found.')));
+                          }
+                          final mentor = Mentor.fromFirestore(snapshot.data!);
+                          // Pass the fetched mentor object to the booking screen
+                          return SessionBookingScreen(mentor: mentor);
+                        },
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -151,7 +167,7 @@ class AppRoutes {
   );
 }
 
-// DashboardScreen class remains the same
+// DashboardScreen class and its helper remain unchanged
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
