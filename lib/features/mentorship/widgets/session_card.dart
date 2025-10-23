@@ -1,6 +1,7 @@
 import 'package:campus_guardian/services/database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // Import go_router for navigation
 import '../models/session.dart';
 
 class SessionCard extends StatelessWidget {
@@ -49,15 +50,9 @@ class SessionCard extends StatelessWidget {
           return Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              // Disabled "Confirmed" button
-              const TextButton(
-                onPressed: null,
-                child: Text('CONFIRMED', style: TextStyle(color: Colors.grey)),
-              ),
-              const SizedBox(width: 8),
               TextButton(
                 onPressed: () => dbService.updateSessionStatus(session.id, 'completed'),
-                child: const Text('COMPLETE', style: TextStyle(color: Colors.blue)),
+                child: const Text('MARK AS COMPLETE', style: TextStyle(color: Colors.blue)),
               ),
               const SizedBox(width: 8),
               TextButton(
@@ -66,33 +61,26 @@ class SessionCard extends StatelessWidget {
               ),
             ],
           );
-        case 'cancelled':
-          return const Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: null,
-                child: Text('CANCELLED', style: TextStyle(color: Colors.grey)),
-              ),
-            ],
-          );
         case 'completed':
-          return const Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: null,
-                child: Text('SESSION COMPLETED', style: TextStyle(color: Colors.grey)),
-              ),
-            ],
-          );
+        // Show feedback button if the mentor has not given feedback yet
+          if (session.mentorFeedback == null) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => context.go('/app/sessions/${session.id}/feedback', extra: true),
+                  child: const Text('GIVE FEEDBACK', style: TextStyle(color: Colors.purple)),
+                ),
+              ],
+            );
+          }
+          return const SizedBox.shrink(); // Hide button if feedback is already given
         default:
           return const SizedBox.shrink();
       }
     }
     // --- Button Logic for the Mentee ---
     else {
-      // Mentee can only cancel if the session is pending or confirmed
       if (session.status == 'pending' || session.status == 'confirmed') {
         return Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -104,10 +92,23 @@ class SessionCard extends StatelessWidget {
           ],
         );
       }
+      if (session.status == 'completed') {
+        // Show feedback button if the mentee has not given feedback yet
+        if (session.menteeFeedback == null) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => context.go('/app/sessions/${session.id}/feedback', extra: false),
+                child: const Text('GIVE FEEDBACK', style: TextStyle(color: Colors.purple)),
+              ),
+            ],
+          );
+        }
+      }
     }
 
-    // Default to no buttons for other states
-    return const SizedBox.shrink();
+    return const SizedBox.shrink(); // Default to no buttons for other states
   }
 
   @override
