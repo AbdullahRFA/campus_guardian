@@ -16,6 +16,8 @@ import '../features/mentorship/screens/my_sessions_screen.dart';
 import '../features/mentorship/screens/give_feedback_screen.dart';
 import '../features/profile/screens/public_profile_screen.dart';
 
+import 'package:campus_guardian/features/microtalks/screens/microtalks_screen.dart';
+
 class MainShell extends StatelessWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
@@ -99,6 +101,12 @@ class AppRoutes {
           return MainShell(child: child);
         },
         routes: [
+          // Inside the ShellRoute's routes: [] list
+          GoRoute(
+            path: '/app/microtalks',
+            builder: (context, state) => const MicroTalksScreen(),
+          ),
+
           GoRoute(
             path: '/app/dashboard',
             builder: (context, state) => const DashboardScreen(),
@@ -189,12 +197,14 @@ class DashboardScreen extends StatelessWidget {
             subtitle: 'Connect with alumni & professors.',
             onTap: () => context.go('/app/mentors'),
           ),
+          // Inside DashboardScreen's ListView children
           _buildDashboardCard(
             context: context,
             icon: Icons.mic,
             title: 'Micro-Talks',
             subtitle: 'Listen to short knowledge sessions.',
-            onTap: () => print('Navigate to Micro-Talks'),
+            // MODIFIED: Navigate to the new screen
+            onTap: () => context.go('/app/microtalks'),
           ),
           _buildDashboardCard(
             context: context,
