@@ -9,6 +9,11 @@ class Session {
   final String sessionTime;
   final String sessionDate;
   final String status;
+  final String sessionTopic; // Add the topic
+  final String? mentorFeedback;
+  final int? mentorRating;
+  final String? menteeFeedback;
+  final int? menteeRating;
 
   Session({
     required this.id, // NEW
@@ -19,6 +24,11 @@ class Session {
     required this.sessionTime,
     required this.sessionDate,
     required this.status,
+    required this.sessionTopic,
+    this.mentorFeedback,
+    this.mentorRating,
+    this.menteeFeedback,
+    this.menteeRating,
   });
 
   factory Session.fromFirestore(DocumentSnapshot doc) {
@@ -32,6 +42,11 @@ class Session {
       sessionTime: data['sessionTime'] ?? '',
       sessionDate: data['sessionDate'] ?? '',
       status: data['status'] ?? '',
+      sessionTopic: data['sessionTopic'] ?? 'No Topic',
+      mentorFeedback: data['mentorFeedback'],
+      mentorRating: data['mentorRating'],
+      menteeFeedback: data['menteeFeedback'],
+      menteeRating: data['menteeRating'],
     );
   }
 }
