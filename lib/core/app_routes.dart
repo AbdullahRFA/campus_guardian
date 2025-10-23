@@ -13,8 +13,8 @@ import '../features/mentorship/models/mentor.dart';
 import '../features/mentorship/screens/mentor_detail_screen.dart';
 import '../features/profile/screens/edit_mentor_profile_screen.dart';
 import '../features/mentorship/screens/session_booking_screen.dart';
+import '../features/mentorship/screens/my_sessions_screen.dart'; // NEW: Import the new screen
 
-// MainShell class remains the same
 class MainShell extends StatelessWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
@@ -32,9 +32,12 @@ class MainShell extends StatelessWidget {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedIndex,
         onTap: (index) => _onItemTapped(index, context),
+        type: BottomNavigationBarType.fixed, // Ensures labels are always visible with 4+ items
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Mentors'),
+          // NEW: Added the "Sessions" tab
+          BottomNavigationBarItem(icon: Icon(Icons.event_note), label: 'Sessions'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
@@ -46,10 +49,15 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('/app/mentors')) {
       return 1;
     }
-    if (location.startsWith('/app/profile')) {
+    // NEW: Handle the index for the sessions tab
+    if (location.startsWith('/app/sessions')) {
       return 2;
     }
-    return 0;
+    // UPDATED: Profile is now at index 3
+    if (location.startsWith('/app/profile')) {
+      return 3;
+    }
+    return 0; // Default to Dashboard
   }
 
   void _onItemTapped(int index, BuildContext context) {
@@ -60,7 +68,12 @@ class MainShell extends StatelessWidget {
       case 1:
         context.go('/app/mentors');
         break;
+    // NEW: Handle navigation to the sessions screen
       case 2:
+        context.go('/app/sessions');
+        break;
+    // UPDATED: Profile navigation is now case 3
+      case 3:
         context.go('/app/profile');
         break;
     }
@@ -117,12 +130,10 @@ class AppRoutes {
                   );
                 },
                 routes: [
-                  // --- THIS IS THE CORRECTED ROUTE ---
                   GoRoute(
                     path: 'book',
                     builder: (context, state) {
                       final mentorId = state.pathParameters['mentorId']!;
-                      // Use a FutureBuilder to fetch the mentor data
                       return FutureBuilder<DocumentSnapshot>(
                         future: FirebaseFirestore.instance.collection('users').doc(mentorId).get(),
                         builder: (context, snapshot) {
@@ -133,7 +144,6 @@ class AppRoutes {
                             return const Scaffold(body: Center(child: Text('Mentor not found.')));
                           }
                           final mentor = Mentor.fromFirestore(snapshot.data!);
-                          // Pass the fetched mentor object to the booking screen
                           return SessionBookingScreen(mentor: mentor);
                         },
                       );
@@ -142,6 +152,11 @@ class AppRoutes {
                 ],
               ),
             ],
+          ),
+          // NEW: Added the route for the "My Sessions" screen
+          GoRoute(
+            path: '/app/sessions',
+            builder: (context, state) => const MySessionsScreen(),
           ),
           GoRoute(
             path: '/app/profile',
