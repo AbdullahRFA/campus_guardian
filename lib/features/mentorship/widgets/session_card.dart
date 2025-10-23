@@ -16,16 +16,104 @@ class SessionCard extends StatelessWidget {
         return Colors.orange;
       case 'cancelled':
         return Colors.red;
-      default:
+      case 'completed':
         return Colors.grey;
+      default:
+        return Colors.blue;
     }
+  }
+
+  /// Builds the correct row of action buttons based on user role and session status.
+  Widget _buildActionButtons(BuildContext context, bool isUserTheMentor, Session session) {
+    final dbService = DatabaseService();
+
+    // --- Button Logic for the Mentor ---
+    if (isUserTheMentor) {
+      switch (session.status) {
+        case 'pending':
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => dbService.updateSessionStatus(session.id, 'confirmed'),
+                child: const Text('CONFIRM', style: TextStyle(color: Colors.green)),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: () => dbService.updateSessionStatus(session.id, 'cancelled'),
+                child: const Text('CANCEL', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          );
+        case 'confirmed':
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Disabled "Confirmed" button
+              const TextButton(
+                onPressed: null,
+                child: Text('CONFIRMED', style: TextStyle(color: Colors.grey)),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: () => dbService.updateSessionStatus(session.id, 'completed'),
+                child: const Text('COMPLETE', style: TextStyle(color: Colors.blue)),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: () => dbService.updateSessionStatus(session.id, 'cancelled'),
+                child: const Text('CANCEL', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          );
+        case 'cancelled':
+          return const Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: null,
+                child: Text('CANCELLED', style: TextStyle(color: Colors.grey)),
+              ),
+            ],
+          );
+        case 'completed':
+          return const Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: null,
+                child: Text('SESSION COMPLETED', style: TextStyle(color: Colors.grey)),
+              ),
+            ],
+          );
+        default:
+          return const SizedBox.shrink();
+      }
+    }
+    // --- Button Logic for the Mentee ---
+    else {
+      // Mentee can only cancel if the session is pending or confirmed
+      if (session.status == 'pending' || session.status == 'confirmed') {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton(
+              onPressed: () => dbService.updateSessionStatus(session.id, 'cancelled'),
+              child: const Text('CANCEL', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      }
+    }
+
+    // Default to no buttons for other states
+    return const SizedBox.shrink();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentUserId = FirebaseAuth.instance.currentUser!.uid;
-    final dbService = DatabaseService();
 
     final bool isUserTheMentor = session.mentorId == currentUserId;
     final String otherPersonName = isUserTheMentor ? session.menteeName : session.mentorName;
@@ -34,7 +122,7 @@ class SessionCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 4.0),
         child: Column(
           children: [
             ListTile(
@@ -46,32 +134,15 @@ class SessionCard extends StatelessWidget {
               title: Text('$otherPersonName ($role)', style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text('Time: ${session.sessionTime} on ${session.sessionDate}'),
               trailing: Chip(
-                label: Text(session.status, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                label: Text(
+                  session.status.toUpperCase(),
+                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
                 backgroundColor: _getStatusColor(session.status),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
             ),
-            // --- NEW: Action Buttons ---
-            if (session.status != 'cancelled' && session.status != 'completed')
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // Mentor-specific "Confirm" button
-                    if (isUserTheMentor && session.status == 'pending')
-                      TextButton(
-                        child: const Text('CONFIRM', style: TextStyle(color: Colors.green)),
-                        onPressed: () => dbService.updateSessionStatus(session.id, 'confirmed'),
-                      ),
-
-                    // "Cancel" button for both roles
-                    TextButton(
-                      child: const Text('CANCEL', style: TextStyle(color: Colors.red)),
-                      onPressed: () => dbService.updateSessionStatus(session.id, 'cancelled'),
-                    ),
-                  ],
-                ),
-              ),
+            _buildActionButtons(context, isUserTheMentor, session),
           ],
         ),
       ),
