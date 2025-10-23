@@ -15,6 +15,8 @@ import '../features/profile/screens/edit_mentor_profile_screen.dart';
 import '../features/mentorship/screens/session_booking_screen.dart';
 import '../features/mentorship/screens/my_sessions_screen.dart'; // NEW: Import the new screen
 
+import 'package:campus_guardian/features/mentorship/screens/give_feedback_screen.dart';
+
 class MainShell extends StatelessWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
@@ -155,8 +157,20 @@ class AppRoutes {
           ),
           // NEW: Added the route for the "My Sessions" screen
           GoRoute(
-            path: '/app/sessions',
-            builder: (context, state) => const MySessionsScreen(),
+              path: '/app/sessions',
+              builder: (context, state) => const MySessionsScreen(),
+              // ADD THIS NESTED ROUTE
+              routes: [
+                GoRoute(
+                  path: ':sessionId/feedback', // e.g., /app/sessions/xyz/feedback
+                  builder: (context, state) {
+                    final sessionId = state.pathParameters['sessionId']!;
+                    // We'll pass the user's role as an extra parameter
+                    final isUserTheMentor = state.extra as bool;
+                    return GiveFeedbackScreen(sessionId: sessionId, isUserTheMentor: isUserTheMentor);
+                  },
+                )
+              ]
           ),
           GoRoute(
             path: '/app/profile',
