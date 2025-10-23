@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../services/database_service.dart';
 import '../../../widgets/app_button.dart';
+import '../../../widgets/app_textfield.dart';
 import '../models/mentor.dart';
 
 class SessionBookingScreen extends StatefulWidget {
   final Mentor mentor;
-
   const SessionBookingScreen({super.key, required this.mentor});
 
   @override
@@ -16,11 +16,20 @@ class SessionBookingScreen extends StatefulWidget {
 }
 
 class _SessionBookingScreenState extends State<SessionBookingScreen> {
+  final _topicController = TextEditingController();
   String? _selectedSlot;
   bool _isBooking = false;
 
   Future<void> _handleConfirmBooking() async {
-    if (_selectedSlot == null) return;
+    if (_selectedSlot == null || _topicController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a time slot and enter a topic.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isBooking = true);
 
@@ -35,6 +44,7 @@ class _SessionBookingScreenState extends State<SessionBookingScreen> {
         mentorName: widget.mentor.name,
         menteeName: menteeName,
         sessionTime: _selectedSlot!,
+        sessionTopic: _topicController.text.trim(),
       );
 
       if (mounted) {
@@ -57,15 +67,18 @@ class _SessionBookingScreenState extends State<SessionBookingScreen> {
   }
 
   @override
+  void dispose() {
+    _topicController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // MODIFIED: Use the mentor's available slots, not a dummy list.
     final List<String> timeSlots = widget.mentor.availableTimeSlots;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Book a Session'),
-      ),
+      appBar: AppBar(title: const Text('Book a Session')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -75,10 +88,16 @@ class _SessionBookingScreenState extends State<SessionBookingScreen> {
             const SizedBox(height: 8),
             Text(widget.mentor.name, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
             const Divider(height: 32),
+            Text('What would you like to discuss?', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 12),
+            AppTextField(
+              controller: _topicController,
+              labelText: 'Session Topic',
+              hintText: 'e.g., Career Advice, Flutter Project Help',
+            ),
+            const SizedBox(height: 24),
             Text('Select an available time slot for today:', style: theme.textTheme.titleMedium),
             const SizedBox(height: 16),
-
-            // MODIFIED: Handle the case where a mentor has no slots available.
             if (timeSlots.isEmpty)
               const Center(
                 child: Padding(
@@ -90,7 +109,6 @@ class _SessionBookingScreenState extends State<SessionBookingScreen> {
               Wrap(
                 spacing: 12.0,
                 runSpacing: 12.0,
-                // MODIFIED: Map over the mentor's actual time slots.
                 children: timeSlots.map((slot) {
                   final isSelected = _selectedSlot == slot;
                   return ChoiceChip(
