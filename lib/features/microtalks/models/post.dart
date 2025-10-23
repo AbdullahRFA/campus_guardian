@@ -4,10 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Post {
   final String id;
   final String title;
-  final String description; // The main content of the post
+  final String description;
   final String speakerName;
   final String thumbnailUrl;
   final Timestamp createdAt;
+  final List<String> likes; // NEW: List of user IDs who liked the post
 
   const Post({
     required this.id,
@@ -16,6 +17,7 @@ class Post {
     required this.speakerName,
     required this.thumbnailUrl,
     required this.createdAt,
+    required this.likes, // NEW: Add to constructor
   });
 
   factory Post.fromFirestore(DocumentSnapshot doc) {
@@ -27,6 +29,7 @@ class Post {
       speakerName: data['speakerName'] ?? 'Unknown Author',
       thumbnailUrl: data['thumbnailUrl'] ?? '',
       createdAt: data['createdAt'] ?? Timestamp.now(),
+      likes: List<String>.from(data['likes'] ?? []), // NEW: Get likes from Firestore
     );
   }
 }
