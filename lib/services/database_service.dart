@@ -58,4 +58,55 @@ class DatabaseService {
       });
     }
   }
+
+
+  // Inside DatabaseService class
+  final CollectionReference microtalkCollection = FirebaseFirestore.instance.collection('microtalks');
+
+  Future<void> createMicroTalk({
+    required String title,
+    required String speakerId,
+    required String speakerName,
+    required String speakerTitle,
+    required String audioUrl,
+  }) async {
+    await microtalkCollection.add({
+      'title': title,
+      'speakerId': speakerId,
+      'speakerName': speakerName,
+      'speakerTitle': speakerTitle,
+      'audioUrl': audioUrl,
+      'thumbnailUrl': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400', // Dummy thumbnail for now
+      'duration': '15 min', // Dummy duration for now
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+
+
+  // Inside your DatabaseService class
+
+// Add this new collection reference
+  final CollectionReference postCollection = FirebaseFirestore.instance.collection('posts');
+
+// Add this new method
+  Future<void> createPost({
+    required String title,
+    required String description,
+    required String thumbnailUrl,
+    required String speakerId,
+    required String speakerName,
+    required String speakerTitle,
+  }) async {
+    await postCollection.add({
+      'title': title,
+      'description': description,
+      'thumbnailUrl': thumbnailUrl,
+      'speakerId': speakerId,
+      'speakerName': speakerName,
+      'speakerTitle': speakerTitle,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
 }

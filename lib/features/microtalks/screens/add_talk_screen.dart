@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:campus_guardian/services/database_service.dart';
 import 'package:campus_guardian/services/storage_service.dart';
 import 'package:campus_guardian/widgets/app_button.dart';
@@ -19,22 +18,25 @@ class AddTalkScreen extends StatefulWidget {
 class _AddTalkScreenState extends State<AddTalkScreen> {
   final _titleController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  File? _audioFile;
-  String? _audioFileName;
+  // MODIFIED: We now store the PlatformFile object from the picker
+  PlatformFile? _audioPlatformFile;
   bool _isLoading = false;
 
   Future<void> _pickAudio() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.audio,
+      // For web, we need to read the file bytes
+      withData: true,
+    );
     if (result != null) {
       setState(() {
-        _audioFile = File(result.files.single.path!);
-        _audioFileName = result.files.single.name;
+        _audioPlatformFile = result.files.single;
       });
     }
   }
 
   Future<void> _submitTalk() async {
-    if (!_formKey.currentState!.validate() || _audioFile == null) {
+    if (!_formKey.currentState!.validate() || _audioPlatformFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please provide a title and select an audio file.'), backgroundColor: Colors.orange),
       );
@@ -48,8 +50,8 @@ class _AddTalkScreenState extends State<AddTalkScreen> {
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
       final userData = userDoc.data()!;
 
-      // 1. Upload audio to Firebase Storage
-      final audioUrl = await StorageService().uploadMicroTalkAudio(user.uid, _audioFile!);
+      // 1. Upload audio using the correct method
+      final audioUrl = await StorageService().uploadMicroTalkAudio(user.uid, _audioPlatformFile!);
 
       // 2. Create the document in Firestore
       await DatabaseService().createMicroTalk(
@@ -78,6 +80,12 @@ class _AddTalkScreenState extends State<AddTalkScreen> {
   }
 
   @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Create a Micro-Talk')),
@@ -93,10 +101,10 @@ class _AddTalkScreenState extends State<AddTalkScreen> {
               label: const Text('Select Audio File'),
               onPressed: _pickAudio,
             ),
-            if (_audioFileName != null)
+            if (_audioPlatformFile != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
-                child: Text('Selected: $_audioFileName', textAlign: TextAlign.center),
+                child: Text('Selected: ${_audioPlatformFile!.name}', textAlign: TextAlign.center),
               ),
             const SizedBox(height: 32),
             AppButton(

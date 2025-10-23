@@ -15,9 +15,13 @@ import '../features/mentorship/screens/session_booking_screen.dart';
 import '../features/mentorship/screens/my_sessions_screen.dart';
 import '../features/mentorship/screens/give_feedback_screen.dart';
 import '../features/profile/screens/public_profile_screen.dart';
-import '../features/microtalks/screens/microtalks_screen.dart';
-import '../features/microtalks/models/talk.dart';
-import '../features/microtalks/screens/talk_player_screen.dart';
+
+// RENAMED/UPDATED IMPORTS for the new Posts feature
+import '../features/microtalks/screens/posts_feed_screen.dart';
+import '../features/microtalks/models/post.dart';
+import '../features/microtalks/screens/add_post_screen.dart';
+import '../features/microtalks/screens/post_detail_screen.dart';
+
 
 class MainShell extends StatelessWidget {
   final Widget child;
@@ -49,33 +53,18 @@ class MainShell extends StatelessWidget {
 
   int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
-    if (location.startsWith('/app/mentors')) {
-      return 1;
-    }
-    if (location.startsWith('/app/sessions')) {
-      return 2;
-    }
-    if (location.startsWith('/app/profile')) {
-      return 3;
-    }
-    // Note: We don't need a separate index for microtalks as it's not in the main nav bar
+    if (location.startsWith('/app/mentors')) return 1;
+    if (location.startsWith('/app/sessions')) return 2;
+    if (location.startsWith('/app/profile')) return 3;
     return 0;
   }
 
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
-      case 0:
-        context.go('/app/dashboard');
-        break;
-      case 1:
-        context.go('/app/mentors');
-        break;
-      case 2:
-        context.go('/app/sessions');
-        break;
-      case 3:
-        context.go('/app/profile');
-        break;
+      case 0: context.go('/app/dashboard'); break;
+      case 1: context.go('/app/mentors'); break;
+      case 2: context.go('/app/sessions'); break;
+      case 3: context.go('/app/profile'); break;
     }
   }
 }
@@ -86,18 +75,9 @@ class AppRoutes {
   static final router = GoRouter(
     initialLocation: '/',
     routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const AuthGate(),
-      ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/signup',
-        builder: (context, state) => const SignupScreen(),
-      ),
+      GoRoute(path: '/', builder: (context, state) => const AuthGate()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
       ShellRoute(
         builder: (context, state, child) {
           return MainShell(child: child);
@@ -112,29 +92,33 @@ class AppRoutes {
             builder: (context, state) => const MentorListScreen(),
           ),
           GoRoute(
-              path: '/app/sessions',
-              builder: (context, state) => const MySessionsScreen(),
-              routes: [
-                GoRoute(
-                  path: ':sessionId/feedback',
-                  builder: (context, state) {
-                    final sessionId = state.pathParameters['sessionId']!;
-                    final isUserTheMentor = state.extra as bool;
-                    return GiveFeedbackScreen(sessionId: sessionId, isUserTheMentor: isUserTheMentor);
-                  },
-                )
-              ]
-          ),
-          // NEW: Route for Micro-Talks list screen and nested player screen
-          GoRoute(
-            path: '/app/microtalks',
-            builder: (context, state) => const MicroTalksScreen(),
+            path: '/app/sessions',
+            builder: (context, state) => const MySessionsScreen(),
             routes: [
               GoRoute(
-                path: ':talkId', // e.g., /app/microtalks/1
+                path: ':sessionId/feedback',
                 builder: (context, state) {
-                  final talk = state.extra as Talk; // We pass the talk object
-                  return TalkPlayerScreen(talk: talk);
+                  final sessionId = state.pathParameters['sessionId']!;
+                  final isUserTheMentor = state.extra as bool;
+                  return GiveFeedbackScreen(sessionId: sessionId, isUserTheMentor: isUserTheMentor);
+                },
+              )
+            ],
+          ),
+          // MODIFIED: Replaced 'microtalks' with 'posts'
+          GoRoute(
+            path: '/app/posts',
+            builder: (context, state) => const PostsFeedScreen(),
+            routes: [
+              GoRoute(
+                path: 'add', // Full path: /app/posts/add
+                builder: (context, state) => const AddPostScreen(),
+              ),
+              GoRoute(
+                path: ':postId', // e.g., /app/posts/some-post-id
+                builder: (context, state) {
+                  final post = state.extra as Post;
+                  return PostDetailScreen(post: post);
                 },
               )
             ],
@@ -152,29 +136,29 @@ class AppRoutes {
                 builder: (context, state) => const EditMentorProfileScreen(),
               ),
               GoRoute(
-                  path: ':userId',
-                  builder: (context, state) {
-                    final userId = state.pathParameters['userId']!;
-                    return PublicProfileScreen(userId: userId);
-                  },
-                  routes: [
-                    GoRoute(
-                      path: 'book',
-                      builder: (context, state) {
-                        final userId = state.pathParameters['userId']!;
-                        return FutureBuilder<DocumentSnapshot>(
-                          future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData) {
-                              return const Scaffold(body: Center(child: CircularProgressIndicator()));
-                            }
-                            final mentor = Mentor.fromFirestore(snapshot.data!);
-                            return SessionBookingScreen(mentor: mentor);
-                          },
-                        );
-                      },
-                    )
-                  ]
+                path: ':userId',
+                builder: (context, state) {
+                  final userId = state.pathParameters['userId']!;
+                  return PublicProfileScreen(userId: userId);
+                },
+                routes: [
+                  GoRoute(
+                    path: 'book',
+                    builder: (context, state) {
+                      final userId = state.pathParameters['userId']!;
+                      return FutureBuilder<DocumentSnapshot>(
+                        future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                          }
+                          final mentor = Mentor.fromFirestore(snapshot.data!);
+                          return SessionBookingScreen(mentor: mentor);
+                        },
+                      );
+                    },
+                  )
+                ],
               ),
             ],
           ),
@@ -207,12 +191,13 @@ class DashboardScreen extends StatelessWidget {
             subtitle: 'Connect with alumni & professors.',
             onTap: () => context.go('/app/mentors'),
           ),
+          // MODIFIED: This card now navigates to the new posts feed
           _buildDashboardCard(
             context: context,
-            icon: Icons.mic,
-            title: 'Micro-Talks',
-            subtitle: 'Listen to short knowledge sessions.',
-            onTap: () => context.go('/app/microtalks'),
+            icon: Icons.article, // Changed icon from mic to article
+            title: 'Knowledge Hub', // Renamed from Micro-Talks
+            subtitle: 'Read posts from mentors.',
+            onTap: () => context.go('/app/posts'),
           ),
           _buildDashboardCard(
             context: context,
@@ -257,9 +242,7 @@ class DashboardScreen extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4.0),
                     Text(
