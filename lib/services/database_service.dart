@@ -109,4 +109,30 @@ class DatabaseService {
     });
   }
 
+  // Add this method inside your DatabaseService class
+  Future<void> togglePostLike(String postId, String userId) async {
+    final postRef = postCollection.doc(postId);
+
+    return FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(postRef);
+
+      if (!snapshot.exists) {
+        throw Exception("Post does not exist!");
+      }
+
+      List<String> likes = List<String>.from(snapshot.data()!['likes'] ?? []);
+
+      if (likes.contains(userId)) {
+        // User has already liked the post, so remove their like
+        likes.remove(userId);
+      } else {
+        // User has not liked the post, so add their like
+        likes.add(userId);
+      }
+
+      // Update the document with the new list of likes
+      transaction.update(postRef, {'likes': likes});
+    });
+  }
+
 }
