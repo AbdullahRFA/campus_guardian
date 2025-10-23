@@ -4,24 +4,31 @@ class DatabaseService {
   final String? uid;
   DatabaseService({this.uid});
 
-  // Reference to the 'users' collection in Firestore
   final CollectionReference userCollection = FirebaseFirestore.instance.collection('users');
+  // --- NEW: Add reference to the sessions collection ---
+  final CollectionReference sessionCollection = FirebaseFirestore.instance.collection('sessions');
 
-  // Method to create or update user data
-  Future<void> updateUserData(String fullName, String email) async {
-    return await userCollection.doc(uid).set({
-      'fullName': fullName,
-      'email': email,
-      'profilePicUrl': '', // Will be updated later
-      'department': '',   // Example field
-      'batch': '',        // Example field
-    });
+  Future<void> updateUserProfile(Map<String, dynamic> userData) async {
+    return await userCollection.doc(uid).set(userData, SetOptions(merge: true));
   }
 
-  // Add this method inside your DatabaseService class
-// NEW, CORRECTED VERSION
-  Future<void> updateUserProfile(Map<String, dynamic> userData) async {
-    // Use .set with SetOptions(merge: true)
-    return await userCollection.doc(uid).set(userData, SetOptions(merge: true));
+  // --- NEW: Method to book a new session ---
+  Future<void> bookSession({
+    required String mentorId,
+    required String menteeId,
+    required String mentorName,
+    required String menteeName,
+    required String sessionTime,
+  }) async {
+    return await sessionCollection.add({
+      'mentorId': mentorId,
+      'menteeId': menteeId,
+      'mentorName': mentorName,
+      'menteeName': menteeName,
+      'sessionTime': sessionTime,
+      'sessionDate': DateTime.now().toIso8601String().split('T').first, // Just the date part
+      'status': 'confirmed',
+      'createdAt': FieldValue.serverTimestamp(), // Let Firestore handle the timestamp
+    });
   }
 }
