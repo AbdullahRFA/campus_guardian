@@ -54,6 +54,7 @@ dependencies:
   firebase_storage: ^13.0.3
   path_provider: ^2.1.5
   url_launcher: ^6.3.2
+  audioplayers: ^6.5.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
