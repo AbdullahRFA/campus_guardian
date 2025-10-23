@@ -6,7 +6,8 @@ class Mentor {
   final String title;
   final String profileImageUrl;
   final List<String> expertise;
-  final String mentorBio; // NEW: Added mentorBio
+  final String mentorBio;
+  final List<String> availableTimeSlots; // NEW
 
   const Mentor({
     required this.id,
@@ -14,7 +15,8 @@ class Mentor {
     required this.title,
     required this.profileImageUrl,
     required this.expertise,
-    required this.mentorBio, // NEW: Added to constructor
+    required this.mentorBio,
+    required this.availableTimeSlots, // NEW
   });
 
   factory Mentor.fromFirestore(DocumentSnapshot doc) {
@@ -25,7 +27,8 @@ class Mentor {
       title: data['mentorTitle'] ?? 'Mentor',
       profileImageUrl: data['profilePicUrl'] ?? '',
       expertise: List<String>.from(data['mentorExpertise'] ?? []),
-      mentorBio: data['mentorBio'] ?? '', // NEW: Get bio from Firestore
+      mentorBio: data['mentorBio'] ?? '',
+      availableTimeSlots: List<String>.from(data['availableTimeSlots'] ?? []), // NEW
     );
   }
 }
