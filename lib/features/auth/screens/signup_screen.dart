@@ -14,7 +14,7 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  final _nameController = TextEditingController(); // <-- NEW
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
@@ -22,7 +22,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose(); // <-- NEW
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -31,18 +31,17 @@ class _SignupScreenState extends State<SignupScreen> {
   void _handleSignUp() async {
     setState(() => _isLoading = true);
 
-    // 1. Create the user account
     final User? user = await _authService.signUpAndGetUser(
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
     );
 
     if (user != null) {
-      // 2. Create the user document in Firestore
-      await DatabaseService(uid: user.uid).updateUserData(
-        _nameController.text.trim(),
-        _emailController.text.trim(),
-      );
+      // FIXED: Call 'updateUserProfile' and pass the initial user data.
+      await DatabaseService(uid: user.uid).updateUserProfile({
+        'fullName': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+      });
     }
 
     if (!mounted) return;
@@ -72,7 +71,7 @@ class _SignupScreenState extends State<SignupScreen> {
             const SizedBox(height: 40),
             Text('Create Your Account', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 40),
-            // AppTextField(controller: _nameController, labelText: 'Full Name'), // <-- NEW
+            // AppTextField(controller: _nameController, labelText: 'Full Name'),
             // const SizedBox(height: 20),
             AppTextField(controller: _emailController, labelText: 'Email Address'),
             const SizedBox(height: 20),

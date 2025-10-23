@@ -17,7 +17,6 @@ class _EditMentorProfileScreenState extends State<EditMentorProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = true;
 
-  // --- NEW: A predefined list of all possible time slots ---
   static const List<String> _allTimeSlots = [
     '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
     '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM',
@@ -25,12 +24,11 @@ class _EditMentorProfileScreenState extends State<EditMentorProfileScreen> {
     '06:00 PM', '06:30 PM', '07:00 PM', '07:30 PM', '08:00 PM', '08:30 PM',
   ];
 
-  // State for the form fields
   final _mentorTitleController = TextEditingController();
   final _mentorBioController = TextEditingController();
   final _mentorExpertiseController = TextEditingController();
   bool _isMentorAvailable = false;
-  List<String> _selectedSlots = []; // NEW: To hold the mentor's chosen slots
+  List<String> _selectedSlots = [];
 
   @override
   void initState() {
@@ -49,7 +47,6 @@ class _EditMentorProfileScreenState extends State<EditMentorProfileScreen> {
           _mentorTitleController.text = data['mentorTitle'] ?? '';
           _mentorBioController.text = data['mentorBio'] ?? '';
           _mentorExpertiseController.text = (data['mentorExpertise'] as List<dynamic>? ?? []).join(', ');
-          // NEW: Load the saved time slots
           _selectedSlots = List<String>.from(data['availableTimeSlots'] ?? []);
         });
       }
@@ -63,14 +60,14 @@ class _EditMentorProfileScreenState extends State<EditMentorProfileScreen> {
     setState(() => _isLoading = true);
     final user = FirebaseAuth.instance.currentUser!;
 
-    List<String> expertiseList = _mentorExpertiseController.text.split(',').map((e) => e.trim()).toList();
+    List<String> expertiseList = _mentorExpertiseController.text.split(',').map((e) => e.trim()).where((s) => s.isNotEmpty).toList();
 
     Map<String, dynamic> mentorData = {
       'isMentorAvailable': _isMentorAvailable,
       'mentorTitle': _mentorTitleController.text.trim(),
       'mentorBio': _mentorBioController.text.trim(),
       'mentorExpertise': expertiseList,
-      'availableTimeSlots': _selectedSlots, // NEW: Save the selected slots
+      'availableTimeSlots': _selectedSlots,
     };
 
     try {
@@ -82,7 +79,11 @@ class _EditMentorProfileScreenState extends State<EditMentorProfileScreen> {
         context.pop();
       }
     } catch (e) {
-      // Error handling
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update: $e'), backgroundColor: Colors.red),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -105,7 +106,17 @@ class _EditMentorProfileScreenState extends State<EditMentorProfileScreen> {
                 borderRadius: BorderRadius.circular(12),
                 color: Theme.of(context).primaryColor.withOpacity(0.05),
               ),
-              child: SwitchListTile(/* ... unchanged ... */),
+              // FIXED: Re-added the required properties to SwitchListTile
+              child: SwitchListTile(
+                title: const Text('Available for Mentorship', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(_isMentorAvailable ? 'You will appear in mentor search results.' : 'You will not be listed as a mentor.'),
+                value: _isMentorAvailable,
+                onChanged: (bool value) {
+                  setState(() {
+                    _isMentorAvailable = value;
+                  });
+                },
+              ),
             ),
             const SizedBox(height: 24),
             AppTextField(controller: _mentorTitleController, labelText: 'Mentor Title', hintText: 'e.g., Software Engineer at Google'),
@@ -118,8 +129,6 @@ class _EditMentorProfileScreenState extends State<EditMentorProfileScreen> {
               child: Text('Separate skills with a comma.', style: TextStyle(color: Colors.grey, fontSize: 12)),
             ),
             const Divider(height: 32),
-
-            // --- NEW: Time Slot Selection UI ---
             Text(
               'Set Your Available Time Slots',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -149,8 +158,6 @@ class _EditMentorProfileScreenState extends State<EditMentorProfileScreen> {
                 );
               }).toList(),
             ),
-            // --- End of new UI ---
-
             const SizedBox(height: 32),
             AppButton(text: 'Save Mentor Profile', onPressed: _saveMentorProfile),
           ],
