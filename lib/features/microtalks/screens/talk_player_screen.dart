@@ -16,11 +16,12 @@ class _TalkPlayerScreenState extends State<TalkPlayerScreen> {
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
 
+  // We will use a dummy URL for now.
+  final String _audioUrl = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+
   @override
   void initState() {
     super.initState();
-    // Set a dummy audio source for now. We'll make this dynamic later.
-    _audioPlayer.setSource(UrlSource('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'));
 
     // Listen to player state changes
     _audioPlayer.onPlayerStateChanged.listen((state) {
@@ -56,7 +57,6 @@ class _TalkPlayerScreenState extends State<TalkPlayerScreen> {
     super.dispose();
   }
 
-  // Helper to format duration
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final minutes = twoDigits(duration.inMinutes.remainder(60));
@@ -74,7 +74,6 @@ class _TalkPlayerScreenState extends State<TalkPlayerScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Thumbnail
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
@@ -85,12 +84,10 @@ class _TalkPlayerScreenState extends State<TalkPlayerScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            // Title and Speaker
             Text(widget.talk.title, style: theme.textTheme.headlineSmall, textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(widget.talk.speakerName, style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey[600])),
             const SizedBox(height: 32),
-            // Progress Slider
             Slider(
               min: 0,
               max: _duration.inSeconds.toDouble(),
@@ -100,7 +97,6 @@ class _TalkPlayerScreenState extends State<TalkPlayerScreen> {
                 await _audioPlayer.seek(position);
               },
             ),
-            // Duration and Position Text
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
@@ -112,7 +108,6 @@ class _TalkPlayerScreenState extends State<TalkPlayerScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            // Player Controls
             CircleAvatar(
               radius: 35,
               child: IconButton(
@@ -122,7 +117,8 @@ class _TalkPlayerScreenState extends State<TalkPlayerScreen> {
                   if (_isPlaying) {
                     await _audioPlayer.pause();
                   } else {
-                    await _audioPlayer.resume();
+                    // MODIFIED: Use the play() method to start the audio
+                    await _audioPlayer.play(UrlSource(_audioUrl));
                   }
                 },
               ),

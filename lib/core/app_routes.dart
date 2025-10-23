@@ -15,9 +15,9 @@ import '../features/mentorship/screens/session_booking_screen.dart';
 import '../features/mentorship/screens/my_sessions_screen.dart';
 import '../features/mentorship/screens/give_feedback_screen.dart';
 import '../features/profile/screens/public_profile_screen.dart';
-
-import 'package:campus_guardian/features/microtalks/screens/microtalks_screen.dart';
-import 'package:campus_guardian/features/microtalks/screens/talk_player_screen.dart';
+import '../features/microtalks/screens/microtalks_screen.dart';
+import '../features/microtalks/models/talk.dart';
+import '../features/microtalks/screens/talk_player_screen.dart';
 
 class MainShell extends StatelessWidget {
   final Widget child;
@@ -58,6 +58,7 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('/app/profile')) {
       return 3;
     }
+    // Note: We don't need a separate index for microtalks as it's not in the main nav bar
     return 0;
   }
 
@@ -103,24 +104,6 @@ class AppRoutes {
         },
         routes: [
           GoRoute(
-            path: '/app/microtalks',
-            builder: (context, state) => const MicroTalksScreen(),
-            // ADD THIS NESTED ROUTE
-            routes: [
-              GoRoute(
-                path: ':talkId', // Creates a dynamic path like /app/microtalks/1
-                builder: (context, state) {
-                  final talkId = state.pathParameters['talkId']!;
-                  // For now, we find the talk from a dummy list.
-                  // We'll replace this with a real data source later.
-                  final talk = (state.extra as Talk); // We will pass the talk object
-                  return TalkPlayerScreen(talk: talk);
-                },
-              )
-            ],
-          ),
-
-          GoRoute(
             path: '/app/dashboard',
             builder: (context, state) => const DashboardScreen(),
           ),
@@ -141,6 +124,20 @@ class AppRoutes {
                   },
                 )
               ]
+          ),
+          // NEW: Route for Micro-Talks list screen and nested player screen
+          GoRoute(
+            path: '/app/microtalks',
+            builder: (context, state) => const MicroTalksScreen(),
+            routes: [
+              GoRoute(
+                path: ':talkId', // e.g., /app/microtalks/1
+                builder: (context, state) {
+                  final talk = state.extra as Talk; // We pass the talk object
+                  return TalkPlayerScreen(talk: talk);
+                },
+              )
+            ],
           ),
           GoRoute(
             path: '/app/profile',
@@ -210,13 +207,11 @@ class DashboardScreen extends StatelessWidget {
             subtitle: 'Connect with alumni & professors.',
             onTap: () => context.go('/app/mentors'),
           ),
-          // Inside DashboardScreen's ListView children
           _buildDashboardCard(
             context: context,
             icon: Icons.mic,
             title: 'Micro-Talks',
             subtitle: 'Listen to short knowledge sessions.',
-            // MODIFIED: Navigate to the new screen
             onTap: () => context.go('/app/microtalks'),
           ),
           _buildDashboardCard(

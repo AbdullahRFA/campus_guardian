@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart'; // FIXED: Changed 'package.' to 'package:'
 import '../models/talk.dart';
+import 'package:go_router/go_router.dart'; // Add this import
 
 class TalkCard extends StatelessWidget {
   final Talk talk;
@@ -15,8 +16,8 @@ class TalkCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-          print('Tapped on talk: ${talk.title}');
-        },
+          context.go('/app/microtalks/${talk.id}', extra: talk);
+          },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
