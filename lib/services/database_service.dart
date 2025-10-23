@@ -11,12 +11,14 @@ class DatabaseService {
     await userCollection.doc(uid).set(userData, SetOptions(merge: true));
   }
 
+  // Inside the DatabaseService class
   Future<void> bookSession({
     required String mentorId,
     required String menteeId,
     required String mentorName,
     required String menteeName,
     required String sessionTime,
+    required String sessionTopic, // NEW: Add the topic parameter
   }) async {
     await sessionCollection.add({
       'mentorId': mentorId,
@@ -24,8 +26,8 @@ class DatabaseService {
       'mentorName': mentorName,
       'menteeName': menteeName,
       'sessionTime': sessionTime,
+      'sessionTopic': sessionTopic, // NEW: Save the topic
       'sessionDate': DateTime.now().toIso8601String().split('T').first,
-      // MODIFIED: Initial status is now "pending"
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
       'participants': [mentorId, menteeId],
