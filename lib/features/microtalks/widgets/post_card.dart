@@ -1,9 +1,9 @@
-// lib/features/microtalks/widgets/post_card.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart'; // Import the share package
 import '../models/post.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:campus_guardian/services/database_service.dart'; // Import DatabaseService
+import 'package:campus_guardian/services/database_service.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -12,7 +12,7 @@ class PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid; // Use nullable uid
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final bool isLiked = currentUserId != null && post.likes.contains(currentUserId);
 
     return Card(
@@ -20,10 +20,9 @@ class PostCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
-      child: Column( // Wrap InkWell content in a Column
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Make only the top part (image + text) tappable for navigation
           InkWell(
             onTap: () {
               context.go('/app/posts/${post.id}', extra: post);
@@ -67,12 +66,13 @@ class PostCard extends StatelessWidget {
               ],
             ),
           ),
-          // --- NEW: Action Bar ---
+          // --- MODIFIED ACTION BAR ---
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // This creates the spacing
               children: [
+                // 1. LIKE BUTTON (Left)
                 Row(
                   children: [
                     IconButton(
@@ -81,36 +81,38 @@ class PostCard extends StatelessWidget {
                         color: isLiked ? Colors.red : Colors.grey,
                       ),
                       onPressed: () {
-                        // Only allow logged-in users to like
                         if (currentUserId != null) {
                           DatabaseService().togglePostLike(post.id, currentUserId);
-                        } else {
-                          // Optional: Show a message asking the user to log in
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please log in to like posts.')),
-                          );
                         }
                       },
                       tooltip: isLiked ? 'Unlike' : 'Like',
                     ),
-                    Text('${post.likes.length}'), // Display like count
+                    Text('${post.likes.length}'),
                   ],
                 ),
+                // 2. COMMENT BUTTON (Middle)
                 TextButton.icon(
                   icon: Icon(Icons.comment_outlined, size: 20, color: Colors.grey[700]),
                   label: Text(
-                    'Comment', // We can add comment count later
+                    'Comment',
                     style: TextStyle(color: Colors.grey[700]),
                   ),
                   onPressed: () {
-                    // Navigate to the detail screen (where comments will be)
                     context.go('/app/posts/${post.id}', extra: post);
+                  },
+                ),
+                // 3. SHARE BUTTON (Right)
+                IconButton(
+                  icon: Icon(Icons.share_outlined, color: Colors.grey[700]),
+                  tooltip: 'Share Post',
+                  onPressed: () {
+                    Share.share('Check out this post on CampusGuardian: "${post.title}" by ${post.speakerName}');
                   },
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8), // Add a little spacing at the bottom
+          const SizedBox(height: 8),
         ],
       ),
     );

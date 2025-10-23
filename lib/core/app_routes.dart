@@ -22,6 +22,7 @@ import '../features/microtalks/models/post.dart';
 import '../features/microtalks/screens/add_post_screen.dart';
 import '../features/microtalks/screens/post_detail_screen.dart';
 
+import '../features/microtalks/screens/my_posts_screen.dart';
 
 class MainShell extends StatelessWidget {
   final Widget child;
@@ -86,6 +87,10 @@ class AppRoutes {
           GoRoute(
             path: '/app/dashboard',
             builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: '/app/my-posts',
+            builder: (context, state) => const MyPostsScreen(),
           ),
           GoRoute(
             path: '/app/mentors',

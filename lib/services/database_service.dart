@@ -6,19 +6,19 @@ class DatabaseService {
 
   final CollectionReference userCollection = FirebaseFirestore.instance.collection('users');
   final CollectionReference sessionCollection = FirebaseFirestore.instance.collection('sessions');
+  final CollectionReference postCollection = FirebaseFirestore.instance.collection('posts');
 
   Future<void> updateUserProfile(Map<String, dynamic> userData) async {
     await userCollection.doc(uid).set(userData, SetOptions(merge: true));
   }
 
-  // Inside the DatabaseService class
   Future<void> bookSession({
     required String mentorId,
     required String menteeId,
     required String mentorName,
     required String menteeName,
     required String sessionTime,
-    required String sessionTopic, // NEW: Add the topic parameter
+    required String sessionTopic,
   }) async {
     await sessionCollection.add({
       'mentorId': mentorId,
@@ -26,7 +26,7 @@ class DatabaseService {
       'mentorName': mentorName,
       'menteeName': menteeName,
       'sessionTime': sessionTime,
-      'sessionTopic': sessionTopic, // NEW: Save the topic
+      'sessionTopic': sessionTopic,
       'sessionDate': DateTime.now().toIso8601String().split('T').first,
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
@@ -34,12 +34,10 @@ class DatabaseService {
     });
   }
 
-  // NEW: Method to update a session's status
   Future<void> updateSessionStatus(String sessionId, String newStatus) async {
     await sessionCollection.doc(sessionId).update({'status': newStatus});
   }
 
-  // Add this method inside your DatabaseService class
   Future<void> submitFeedback({
     required String sessionId,
     required int rating,
@@ -59,37 +57,6 @@ class DatabaseService {
     }
   }
 
-
-  // Inside DatabaseService class
-  final CollectionReference microtalkCollection = FirebaseFirestore.instance.collection('microtalks');
-
-  Future<void> createMicroTalk({
-    required String title,
-    required String speakerId,
-    required String speakerName,
-    required String speakerTitle,
-    required String audioUrl,
-  }) async {
-    await microtalkCollection.add({
-      'title': title,
-      'speakerId': speakerId,
-      'speakerName': speakerName,
-      'speakerTitle': speakerTitle,
-      'audioUrl': audioUrl,
-      'thumbnailUrl': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400', // Dummy thumbnail for now
-      'duration': '15 min', // Dummy duration for now
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-
-
-  // Inside your DatabaseService class
-
-// Add this new collection reference
-  final CollectionReference postCollection = FirebaseFirestore.instance.collection('posts');
-
-// Add this new method
   Future<void> createPost({
     required String title,
     required String description,
@@ -106,33 +73,66 @@ class DatabaseService {
       'speakerName': speakerName,
       'speakerTitle': speakerTitle,
       'createdAt': FieldValue.serverTimestamp(),
+      'likes': [],
     });
   }
 
-  // Add this method inside your DatabaseService class
   Future<void> togglePostLike(String postId, String userId) async {
     final postRef = postCollection.doc(postId);
 
     return FirebaseFirestore.instance.runTransaction((transaction) async {
       final snapshot = await transaction.get(postRef);
-
       if (!snapshot.exists) {
         throw Exception("Post does not exist!");
       }
-
-      List<String> likes = List<String>.from(snapshot.data()!['likes'] ?? []);
-
+      final data = snapshot.data() as Map<String, dynamic>;
+      List<String> likes = List<String>.from(data['likes'] ?? []);
       if (likes.contains(userId)) {
-        // User has already liked the post, so remove their like
         likes.remove(userId);
       } else {
-        // User has not liked the post, so add their like
         likes.add(userId);
       }
-
-      // Update the document with the new list of likes
       transaction.update(postRef, {'likes': likes});
     });
   }
 
+  Future<void> addComment({
+    required String postId,
+    required String text,
+    required String commenterId,
+    required String commenterName,
+  }) async {
+    if (text.trim().isEmpty) return;
+    final commentCollection = postCollection.doc(postId).collection('comments');
+    await commentCollection.add({
+      'text': text,
+      'commenterId': commenterId,
+      'commenterName': commenterName,
+      'createdAt': FieldValue.serverTimestamp(),
+      'replies': [],
+    });
+  }
+
+  Future<void> addReplyToComment({
+    required String postId,
+    required String commentId,
+    required String text,
+    required String replierId,
+    required String replierName,
+  }) async {
+    if (text.trim().isEmpty) return;
+    final commentRef = postCollection.doc(postId).collection('comments').doc(commentId);
+
+    final replyData = {
+      'text': text,
+      'replierId': replierId,
+      'replierName': replierName,
+      // FIXED: Changed from serverTimestamp to a client-side timestamp
+      'createdAt': Timestamp.now(),
+    };
+
+    await commentRef.update({
+      'replies': FieldValue.arrayUnion([replyData])
+    });
+  }
 }

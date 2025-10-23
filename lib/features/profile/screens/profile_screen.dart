@@ -114,7 +114,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     subtitle: const Text("Set your availability and expertise"),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () => context.push('/app/profile/edit-mentor'),
-                  )
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    title: const Text("My Published Posts"),
+                    subtitle: const Text("View posts you have created"),
+                    trailing: const Icon(Icons.arrow_forward_ios),
+                    onTap: () => context.push('/app/my-posts'), // Navigate to the new screen
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
