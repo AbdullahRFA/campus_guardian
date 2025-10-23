@@ -38,4 +38,24 @@ class DatabaseService {
   Future<void> updateSessionStatus(String sessionId, String newStatus) async {
     await sessionCollection.doc(sessionId).update({'status': newStatus});
   }
+
+  // Add this method inside your DatabaseService class
+  Future<void> submitFeedback({
+    required String sessionId,
+    required int rating,
+    required String feedback,
+    required bool isUserTheMentor,
+  }) async {
+    if (isUserTheMentor) {
+      await sessionCollection.doc(sessionId).update({
+        'mentorRating': rating,
+        'mentorFeedback': feedback,
+      });
+    } else {
+      await sessionCollection.doc(sessionId).update({
+        'menteeRating': rating,
+        'menteeFeedback': feedback,
+      });
+    }
+  }
 }
