@@ -8,11 +8,9 @@ class DatabaseService {
   final CollectionReference sessionCollection = FirebaseFirestore.instance.collection('sessions');
 
   Future<void> updateUserProfile(Map<String, dynamic> userData) async {
-    // This method uses .set with merge, which is correct.
     await userCollection.doc(uid).set(userData, SetOptions(merge: true));
   }
 
-// Inside the DatabaseService class
   Future<void> bookSession({
     required String mentorId,
     required String menteeId,
@@ -27,10 +25,15 @@ class DatabaseService {
       'menteeName': menteeName,
       'sessionTime': sessionTime,
       'sessionDate': DateTime.now().toIso8601String().split('T').first,
-      'status': 'confirmed',
+      // MODIFIED: Initial status is now "pending"
+      'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
-      // --- ADD THIS LINE ---
-      'participants': [mentorId, menteeId], // An array of both user IDs
+      'participants': [mentorId, menteeId],
     });
+  }
+
+  // NEW: Method to update a session's status
+  Future<void> updateSessionStatus(String sessionId, String newStatus) async {
+    await sessionCollection.doc(sessionId).update({'status': newStatus});
   }
 }
