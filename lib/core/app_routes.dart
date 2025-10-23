@@ -17,6 +17,7 @@ import '../features/mentorship/screens/give_feedback_screen.dart';
 import '../features/profile/screens/public_profile_screen.dart';
 
 import 'package:campus_guardian/features/microtalks/screens/microtalks_screen.dart';
+import 'package:campus_guardian/features/microtalks/screens/talk_player_screen.dart';
 
 class MainShell extends StatelessWidget {
   final Widget child;
@@ -101,10 +102,22 @@ class AppRoutes {
           return MainShell(child: child);
         },
         routes: [
-          // Inside the ShellRoute's routes: [] list
           GoRoute(
             path: '/app/microtalks',
             builder: (context, state) => const MicroTalksScreen(),
+            // ADD THIS NESTED ROUTE
+            routes: [
+              GoRoute(
+                path: ':talkId', // Creates a dynamic path like /app/microtalks/1
+                builder: (context, state) {
+                  final talkId = state.pathParameters['talkId']!;
+                  // For now, we find the talk from a dummy list.
+                  // We'll replace this with a real data source later.
+                  final talk = (state.extra as Talk); // We will pass the talk object
+                  return TalkPlayerScreen(talk: talk);
+                },
+              )
+            ],
           ),
 
           GoRoute(
