@@ -2,16 +2,18 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:campus_guardian/features/mentorship/models/session.dart';
 import 'package:campus_guardian/features/profile/widgets/session_history_card.dart';
+import 'package:campus_guardian/widgets/app_button.dart';
 
 class PublicProfileScreen extends StatelessWidget {
   final String userId;
   const PublicProfileScreen({super.key, required this.userId});
 
-  // We copy the helper methods here for reusability
+  // Helper function to launch URLs safely
   Future<void> _launchURL(BuildContext context, String urlString) async {
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
@@ -46,6 +48,7 @@ class PublicProfileScreen extends StatelessWidget {
             children: [
               _buildProfileHeader(context, userData),
               const SizedBox(height: 16),
+              // Conditionally show the Mentorship Profile card if the user is a mentor
               if (userData['isMentorAvailable'] == true) ...[
                 _buildInfoCard(
                   context,
@@ -91,7 +94,8 @@ class PublicProfileScreen extends StatelessWidget {
                       return Column(
                         children: sessionSnapshot.data!.docs.map((doc) {
                           final session = Session.fromFirestore(doc);
-                          return SessionHistoryCard(session: session);
+                          // FIXED: Pass the userId of the public profile to the card
+                          return SessionHistoryCard(session: session, profileOwnerId: userId);
                         }).toList(),
                       );
                     },
@@ -102,10 +106,36 @@ class PublicProfileScreen extends StatelessWidget {
           );
         },
       ),
+      // Conditionally shows the "Book a Session" button at the bottom
+      bottomNavigationBar: FutureBuilder<DocumentSnapshot>(
+        future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const SizedBox.shrink();
+
+          var userData = snapshot.data!.data() as Map<String, dynamic>;
+          bool isMentor = userData['isMentorAvailable'] ?? false;
+
+          // Only show the button if the viewed user is an available mentor
+          if (isMentor) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: AppButton(
+                text: 'Book a Session',
+                onPressed: () {
+                  // Navigate to the booking screen for this user
+                  context.go('/app/profile/$userId/book');
+                },
+              ),
+            );
+          } else {
+            return const SizedBox.shrink(); // Show nothing if not a mentor
+          }
+        },
+      ),
     );
   }
 
-  // Helper Widgets (copied from ProfileScreen for reusability)
+  // Helper Widgets
   Widget _buildProfileHeader(BuildContext context, Map<String, dynamic> userData) {
     String profilePicUrl = userData['profilePicUrl'] ?? '';
     ImageProvider? backgroundImage;

@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// NEW: Import the Session model and the new SessionHistoryCard widget
 import 'package:campus_guardian/features/mentorship/models/session.dart';
 import 'package:campus_guardian/features/profile/widgets/session_history_card.dart';
 
@@ -140,14 +139,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 16),
 
-              // --- NEW: Session History Card ---
               _buildInfoCard(
                 context,
                 title: 'Session History & Feedback',
                 icon: Icons.history,
                 children: [
                   StreamBuilder<QuerySnapshot>(
-                    // Query for completed sessions where the user was a participant
                     stream: FirebaseFirestore.instance
                         .collection('sessions')
                         .where('participants', arrayContains: currentUserId)
@@ -159,8 +156,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
                       }
                       if (sessionSnapshot.hasError) {
-                        return Center(child: Text('Error: ${sessionSnapshot.error}'));
+                        print("--- SESSION HISTORY ERROR ---");
+                        print(sessionSnapshot.error);
+                        print("-----------------------------");
+
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.error_outline, color: Colors.red, size: 40),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Could not load session history.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'A Firestore index might be building or a build cache is stale. Please try a full app restart.',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        );
                       }
+
                       if (!sessionSnapshot.hasData || sessionSnapshot.data!.docs.isEmpty) {
                         return const Center(child: Padding(padding: EdgeInsets.all(16.0), child: Text('No completed sessions yet.')));
                       }
@@ -168,7 +189,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       return Column(
                         children: sessionSnapshot.data!.docs.map((doc) {
                           final session = Session.fromFirestore(doc);
-                          return SessionHistoryCard(session: session);
+                          // FIXED: Pass the currentUserId to the SessionHistoryCard
+                          return SessionHistoryCard(session: session, profileOwnerId: currentUserId);
                         }).toList(),
                       );
                     },

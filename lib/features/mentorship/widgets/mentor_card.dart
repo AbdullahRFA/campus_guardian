@@ -17,8 +17,7 @@ class MentorCard extends StatelessWidget {
       child: InkWell(
         onTap: () {
           // MODIFIED: Navigate to the detail screen using the mentor's ID
-          context.go('/app/mentors/${mentor.id}');
-        },
+          context.go('/app/profile/${mentor.id}');        },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16.0),

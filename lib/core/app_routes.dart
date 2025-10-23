@@ -10,12 +10,11 @@ import 'package:go_router/go_router.dart';
 
 import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/mentorship/models/mentor.dart';
-import '../features/mentorship/screens/mentor_detail_screen.dart';
 import '../features/profile/screens/edit_mentor_profile_screen.dart';
 import '../features/mentorship/screens/session_booking_screen.dart';
-import '../features/mentorship/screens/my_sessions_screen.dart'; // NEW: Import the new screen
-
-import 'package:campus_guardian/features/mentorship/screens/give_feedback_screen.dart';
+import '../features/mentorship/screens/my_sessions_screen.dart';
+import '../features/mentorship/screens/give_feedback_screen.dart';
+import '../features/profile/screens/public_profile_screen.dart';
 
 class MainShell extends StatelessWidget {
   final Widget child;
@@ -34,11 +33,10 @@ class MainShell extends StatelessWidget {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedIndex,
         onTap: (index) => _onItemTapped(index, context),
-        type: BottomNavigationBarType.fixed, // Ensures labels are always visible with 4+ items
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Mentors'),
-          // NEW: Added the "Sessions" tab
           BottomNavigationBarItem(icon: Icon(Icons.event_note), label: 'Sessions'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
@@ -51,15 +49,13 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('/app/mentors')) {
       return 1;
     }
-    // NEW: Handle the index for the sessions tab
     if (location.startsWith('/app/sessions')) {
       return 2;
     }
-    // UPDATED: Profile is now at index 3
     if (location.startsWith('/app/profile')) {
       return 3;
     }
-    return 0; // Default to Dashboard
+    return 0;
   }
 
   void _onItemTapped(int index, BuildContext context) {
@@ -70,11 +66,9 @@ class MainShell extends StatelessWidget {
       case 1:
         context.go('/app/mentors');
         break;
-    // NEW: Handle navigation to the sessions screen
       case 2:
         context.go('/app/sessions');
         break;
-    // UPDATED: Profile navigation is now case 3
       case 3:
         context.go('/app/profile');
         break;
@@ -112,60 +106,15 @@ class AppRoutes {
           GoRoute(
             path: '/app/mentors',
             builder: (context, state) => const MentorListScreen(),
-            routes: [
-              GoRoute(
-                path: ':mentorId',
-                builder: (context, state) {
-                  final mentorId = state.pathParameters['mentorId']!;
-                  return FutureBuilder<DocumentSnapshot>(
-                    future: FirebaseFirestore.instance.collection('users').doc(mentorId).get(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-                      }
-                      if (!snapshot.hasData || !snapshot.data!.exists) {
-                        return const Scaffold(body: Center(child: Text('Mentor not found.')));
-                      }
-                      final mentor = Mentor.fromFirestore(snapshot.data!);
-                      return MentorDetailScreen(mentor: mentor);
-                    },
-                  );
-                },
-                routes: [
-                  GoRoute(
-                    path: 'book',
-                    builder: (context, state) {
-                      final mentorId = state.pathParameters['mentorId']!;
-                      return FutureBuilder<DocumentSnapshot>(
-                        future: FirebaseFirestore.instance.collection('users').doc(mentorId).get(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Scaffold(body: Center(child: CircularProgressIndicator()));
-                          }
-                          if (!snapshot.hasData || !snapshot.data!.exists) {
-                            return const Scaffold(body: Center(child: Text('Mentor not found.')));
-                          }
-                          final mentor = Mentor.fromFirestore(snapshot.data!);
-                          return SessionBookingScreen(mentor: mentor);
-                        },
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
           ),
-          // NEW: Added the route for the "My Sessions" screen
           GoRoute(
               path: '/app/sessions',
               builder: (context, state) => const MySessionsScreen(),
-              // ADD THIS NESTED ROUTE
               routes: [
                 GoRoute(
-                  path: ':sessionId/feedback', // e.g., /app/sessions/xyz/feedback
+                  path: ':sessionId/feedback',
                   builder: (context, state) {
                     final sessionId = state.pathParameters['sessionId']!;
-                    // We'll pass the user's role as an extra parameter
                     final isUserTheMentor = state.extra as bool;
                     return GiveFeedbackScreen(sessionId: sessionId, isUserTheMentor: isUserTheMentor);
                   },
@@ -184,6 +133,31 @@ class AppRoutes {
                 path: 'edit-mentor',
                 builder: (context, state) => const EditMentorProfileScreen(),
               ),
+              GoRoute(
+                  path: ':userId',
+                  builder: (context, state) {
+                    final userId = state.pathParameters['userId']!;
+                    return PublicProfileScreen(userId: userId);
+                  },
+                  routes: [
+                    GoRoute(
+                      path: 'book',
+                      builder: (context, state) {
+                        final userId = state.pathParameters['userId']!;
+                        return FutureBuilder<DocumentSnapshot>(
+                          future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                            }
+                            final mentor = Mentor.fromFirestore(snapshot.data!);
+                            return SessionBookingScreen(mentor: mentor);
+                          },
+                        );
+                      },
+                    )
+                  ]
+              ),
             ],
           ),
         ],
@@ -196,7 +170,6 @@ class AppRoutes {
   );
 }
 
-// DashboardScreen class and its helper remain unchanged
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 

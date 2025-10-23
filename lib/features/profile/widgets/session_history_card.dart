@@ -1,22 +1,29 @@
 import 'package:campus_guardian/features/mentorship/models/session.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class SessionHistoryCard extends StatelessWidget {
   final Session session;
-  const SessionHistoryCard({super.key, required this.session});
+  final String profileOwnerId; // The ID of the user whose profile is being viewed
+
+  const SessionHistoryCard({
+    super.key,
+    required this.session,
+    required this.profileOwnerId,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
-    final isUserTheMentor = session.mentorId == currentUserId;
+    // Determine if the owner of THIS profile was the mentor in the session
+    final bool wasProfileOwnerTheMentor = session.mentorId == profileOwnerId;
 
-    // Get the feedback and rating this user RECEIVED
-    final feedback = isUserTheMentor ? session.menteeFeedback : session.mentorFeedback;
-    final rating = isUserTheMentor ? session.menteeRating : session.mentorRating;
-    final otherPerson = isUserTheMentor ? session.menteeName : session.mentorName;
+    // Get the feedback and rating the profile owner RECEIVED from the other person
+    final feedback = wasProfileOwnerTheMentor ? session.menteeFeedback : session.mentorFeedback;
+    final rating = wasProfileOwnerTheMentor ? session.menteeRating : session.mentorRating;
 
-    // Don't show anything if there's no feedback for this session
+    // Get the name of the person who GAVE the feedback
+    final feedbackGiverName = wasProfileOwnerTheMentor ? session.menteeName : session.mentorName;
+
+    // Don't show anything if there's no feedback for this user in this session
     if (feedback == null || feedback.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -38,11 +45,11 @@ class SessionHistoryCard extends StatelessWidget {
                   size: 20,
                 )),
                 const SizedBox(width: 10),
-                Expanded(child: Text("Feedback from $otherPerson", style: const TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(child: Text("Feedback from $feedbackGiverName", style: const TextStyle(fontWeight: FontWeight.bold))),
               ],
             ),
             const SizedBox(height: 8),
-            Text('"${feedback}"', style: const TextStyle(fontStyle: FontStyle.italic)),
+            Text('"$feedback"', style: const TextStyle(fontStyle: FontStyle.italic)),
           ],
         ),
       ),

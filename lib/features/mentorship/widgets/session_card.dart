@@ -36,6 +36,11 @@ class SessionCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
+                child: const Text('VIEW PROFILE'),
+                onPressed: () => context.push('/app/profile/${session.menteeId}'),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
                 onPressed: () => dbService.updateSessionStatus(session.id, 'confirmed'),
                 child: const Text('CONFIRM', style: TextStyle(color: Colors.green)),
               ),
