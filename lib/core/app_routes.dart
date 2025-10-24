@@ -23,6 +23,7 @@ import '../features/microtalks/screens/add_post_screen.dart';
 import '../features/microtalks/screens/post_detail_screen.dart';
 
 import '../features/microtalks/screens/my_posts_screen.dart';
+import 'package:campus_guardian/features/skill_exchange/screens/skill_exchange_screen.dart';
 
 class MainShell extends StatelessWidget {
   final Widget child;
@@ -87,6 +88,11 @@ class AppRoutes {
           GoRoute(
             path: '/app/dashboard',
             builder: (context, state) => const DashboardScreen(),
+          ),
+          // Inside the ShellRoute's routes: [] list
+          GoRoute(
+            path: '/app/skill-exchange',
+            builder: (context, state) => const SkillExchangeScreen(),
           ),
           GoRoute(
             path: '/app/my-posts',
@@ -204,12 +210,13 @@ class DashboardScreen extends StatelessWidget {
             subtitle: 'Read posts from mentors.',
             onTap: () => context.go('/app/posts'),
           ),
+          // Inside DashboardScreen's ListView children
           _buildDashboardCard(
             context: context,
             icon: Icons.swap_horiz,
             title: 'Skill Exchange',
             subtitle: 'Offer help and earn "Wisdom Credits".',
-            onTap: () => print('Navigate to Skill Exchange'),
+            onTap: () => context.go('/app/skill-exchange'), // MODIFIED
           ),
         ],
       ),
