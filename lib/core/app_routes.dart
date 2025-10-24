@@ -25,6 +25,8 @@ import '../features/microtalks/screens/post_detail_screen.dart';
 import '../features/microtalks/screens/my_posts_screen.dart';
 import 'package:campus_guardian/features/skill_exchange/screens/skill_exchange_screen.dart';
 
+import 'package:campus_guardian/features/skill_exchange/screens/skill_exchange_screen.dart';
+
 class MainShell extends StatelessWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
@@ -211,11 +213,12 @@ class DashboardScreen extends StatelessWidget {
             onTap: () => context.go('/app/posts'),
           ),
           // Inside DashboardScreen's ListView children
+          // Inside DashboardScreen's ListView children
           _buildDashboardCard(
             context: context,
             icon: Icons.swap_horiz,
             title: 'Skill Exchange',
-            subtitle: 'Offer help and earn "Wisdom Credits".',
+            subtitle: 'Offer help and earn "Wisdom Credits".', // [cite: 79]
             onTap: () => context.go('/app/skill-exchange'), // MODIFIED
           ),
         ],

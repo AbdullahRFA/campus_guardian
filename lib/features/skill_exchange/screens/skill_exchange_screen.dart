@@ -42,6 +42,8 @@ class SkillExchangeScreen extends StatelessWidget {
         child: const Icon(Icons.add),
         tooltip: 'Post a new request',
       ),
+      // This line moves the button to the bottom left
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 }
