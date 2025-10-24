@@ -31,10 +31,12 @@ import 'package:campus_guardian/features/profile/screens/public_profile_screen.d
 import 'package:campus_guardian/features/skill_exchange/screens/skill_exchange_screen.dart';
 // FIXED: Add the import for CreateRequestScreen
 import 'package:campus_guardian/features/skill_exchange/screens/create_request_screen.dart';
-import 'package:campus_guardian/features/skill_exchange/screens/create_request_screen.dart';
+import 'package:campus_guardian/features/skill_exchange/models/skill_request.dart';
+import 'package:campus_guardian/features/skill_exchange/screens/edit_request_screen.dart';
 
 // KnowledgeBot
 import 'package:campus_guardian/features/knowledgebot/screens/chat_screen.dart';
+
 
 
 class MainShell extends StatelessWidget {
@@ -147,8 +149,22 @@ class AppRoutes {
         builder: (context, state) => const MyPostsScreen(),
       ),
       GoRoute(
-        path: '/app/skill-exchange/create', // Keep create screen top-level
-        builder: (context, state) => const CreateRequestScreen(),
+          path: '/app/skill-exchange',
+          builder: (context, state) => const SkillExchangeScreen(),
+          routes: [
+            GoRoute(
+              path: 'create',
+              builder: (context, state) => const CreateRequestScreen(),
+            ),
+            // --- ADD THIS NEW NESTED ROUTE ---
+            GoRoute(
+              path: ':requestId/edit', // e.g., /app/skill-exchange/xyz/edit
+              builder: (context, state) {
+                final request = state.extra as SkillRequest; // Pass the request object
+                return EditRequestScreen(request: request);
+              },
+            ),
+          ]
       ),
       GoRoute( // This is a nested route within Profile, but defined top-level for clarity of nesting
           path: '/app/profile/:userId',

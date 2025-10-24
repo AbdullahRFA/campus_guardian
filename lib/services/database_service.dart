@@ -156,4 +156,27 @@ class DatabaseService {
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
+
+  // Add these two methods inside your DatabaseService class
+
+// Method to update an existing skill request
+  Future<void> updateSkillRequest({
+    required String requestId,
+    required String title,
+    required String description,
+    required List<String> tags,
+    required int creditsOffered,
+  }) async {
+    await skillRequestCollection.doc(requestId).update({
+      'title': title,
+      'description': description,
+      'tags': tags,
+      'creditsOffered': creditsOffered,
+    });
+  }
+
+// Method to delete a skill request
+  Future<void> deleteSkillRequest(String requestId) async {
+    await skillRequestCollection.doc(requestId).delete();
+  }
 }
