@@ -1,31 +1,41 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:campus_guardian/features/auth/screens/auth_gate.dart';
-import 'package:campus_guardian/features/auth/screens/login_screen.dart';
-import 'package:campus_guardian/features/auth/screens/signup_screen.dart';
-import 'package:campus_guardian/features/knowledgebot/screens/chat_screen.dart';
-import 'package:campus_guardian/features/mentorship/screens/mentor_list_screen.dart';
-import 'package:campus_guardian/features/profile/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../features/profile/screens/edit_profile_screen.dart';
-import '../features/mentorship/models/mentor.dart';
-import '../features/profile/screens/edit_mentor_profile_screen.dart';
-import '../features/mentorship/screens/session_booking_screen.dart';
-import '../features/mentorship/screens/my_sessions_screen.dart';
-import '../features/mentorship/screens/give_feedback_screen.dart';
-import '../features/profile/screens/public_profile_screen.dart';
+// Auth
+import 'package:campus_guardian/features/auth/screens/auth_gate.dart';
+import 'package:campus_guardian/features/auth/screens/login_screen.dart';
+import 'package:campus_guardian/features/auth/screens/signup_screen.dart';
 
-// RENAMED/UPDATED IMPORTS for the new Posts feature
-import '../features/microtalks/screens/posts_feed_screen.dart';
-import '../features/microtalks/models/post.dart';
-import '../features/microtalks/screens/add_post_screen.dart';
-import '../features/microtalks/screens/post_detail_screen.dart';
+// Knowledge Hub (Posts)
+import 'package:campus_guardian/features/microtalks/models/post.dart';
+import 'package:campus_guardian/features/microtalks/screens/add_post_screen.dart';
+import 'package:campus_guardian/features/microtalks/screens/my_posts_screen.dart';
+import 'package:campus_guardian/features/microtalks/screens/post_detail_screen.dart';
+import 'package:campus_guardian/features/microtalks/screens/posts_feed_screen.dart';
 
-import '../features/microtalks/screens/my_posts_screen.dart';
+// Mentorship
+import 'package:campus_guardian/features/mentorship/models/mentor.dart';
+import 'package:campus_guardian/features/mentorship/screens/give_feedback_screen.dart';
+import 'package:campus_guardian/features/mentorship/screens/mentor_list_screen.dart';
+import 'package:campus_guardian/features/mentorship/screens/my_sessions_screen.dart';
+import 'package:campus_guardian/features/mentorship/screens/session_booking_screen.dart';
+
+// Profile
+import 'package:campus_guardian/features/profile/screens/edit_mentor_profile_screen.dart';
+import 'package:campus_guardian/features/profile/screens/edit_profile_screen.dart';
+import 'package:campus_guardian/features/profile/screens/profile_screen.dart';
+import 'package:campus_guardian/features/profile/screens/public_profile_screen.dart';
+
+// Skill Exchange
 import 'package:campus_guardian/features/skill_exchange/screens/skill_exchange_screen.dart';
+// FIXED: Add the import for CreateRequestScreen
+import 'package:campus_guardian/features/skill_exchange/screens/create_request_screen.dart';
+import 'package:campus_guardian/features/skill_exchange/screens/create_request_screen.dart';
 
-import 'package:campus_guardian/features/skill_exchange/screens/skill_exchange_screen.dart';
+// KnowledgeBot
+import 'package:campus_guardian/features/knowledgebot/screens/chat_screen.dart';
+
 
 class MainShell extends StatelessWidget {
   final Widget child;
@@ -79,9 +89,12 @@ class AppRoutes {
   static final router = GoRouter(
     initialLocation: '/',
     routes: [
+      // Top-level auth routes
       GoRoute(path: '/', builder: (context, state) => const AuthGate()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
+
+      // The ShellRoute contains only the screens with the main bottom navigation bar
       ShellRoute(
         builder: (context, state, child) {
           return MainShell(child: child);
@@ -91,15 +104,6 @@ class AppRoutes {
             path: '/app/dashboard',
             builder: (context, state) => const DashboardScreen(),
           ),
-          // Inside the ShellRoute's routes: [] list
-          GoRoute(
-            path: '/app/skill-exchange',
-            builder: (context, state) => const SkillExchangeScreen(),
-          ),
-          GoRoute(
-            path: '/app/my-posts',
-            builder: (context, state) => const MyPostsScreen(),
-          ),
           GoRoute(
             path: '/app/mentors',
             builder: (context, state) => const MentorListScreen(),
@@ -107,80 +111,84 @@ class AppRoutes {
           GoRoute(
             path: '/app/sessions',
             builder: (context, state) => const MySessionsScreen(),
-            routes: [
-              GoRoute(
-                path: ':sessionId/feedback',
-                builder: (context, state) {
-                  final sessionId = state.pathParameters['sessionId']!;
-                  final isUserTheMentor = state.extra as bool;
-                  return GiveFeedbackScreen(sessionId: sessionId, isUserTheMentor: isUserTheMentor);
-                },
-              )
-            ],
-          ),
-          // MODIFIED: Replaced 'microtalks' with 'posts'
-          GoRoute(
-            path: '/app/posts',
-            builder: (context, state) => const PostsFeedScreen(),
-            routes: [
-              GoRoute(
-                path: 'add', // Full path: /app/posts/add
-                builder: (context, state) => const AddPostScreen(),
-              ),
-              GoRoute(
-                path: ':postId', // e.g., /app/posts/some-post-id
-                builder: (context, state) {
-                  final post = state.extra as Post;
-                  return PostDetailScreen(post: post);
-                },
-              )
-            ],
           ),
           GoRoute(
             path: '/app/profile',
             builder: (context, state) => const ProfileScreen(),
-            routes: [
-              GoRoute(
-                path: 'edit',
-                builder: (context, state) => const EditProfileScreen(),
-              ),
-              GoRoute(
-                path: 'edit-mentor',
-                builder: (context, state) => const EditMentorProfileScreen(),
-              ),
-              GoRoute(
-                path: ':userId',
-                builder: (context, state) {
-                  final userId = state.pathParameters['userId']!;
-                  return PublicProfileScreen(userId: userId);
-                },
-                routes: [
-                  GoRoute(
-                    path: 'book',
-                    builder: (context, state) {
-                      final userId = state.pathParameters['userId']!;
-                      return FutureBuilder<DocumentSnapshot>(
-                        future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const Scaffold(body: Center(child: CircularProgressIndicator()));
-                          }
-                          final mentor = Mentor.fromFirestore(snapshot.data!);
-                          return SessionBookingScreen(mentor: mentor);
-                        },
-                      );
-                    },
-                  )
-                ],
-              ),
-            ],
+          ),
+          GoRoute(
+            path: '/app/skill-exchange', // Added Skill Exchange to Shell
+            builder: (context, state) => const SkillExchangeScreen(),
           ),
         ],
       ),
+
+      // Other top-level routes (these will cover the whole screen)
       GoRoute(
         path: '/chat',
         builder: (context, state) => const ChatScreen(),
       ),
+      GoRoute(
+        path: '/app/posts',
+        builder: (context, state) => const PostsFeedScreen(),
+        routes: [
+          GoRoute(path: 'add', builder: (context, state) => const AddPostScreen()),
+          GoRoute(
+            path: ':postId',
+            builder: (context, state) {
+              final post = state.extra as Post;
+              return PostDetailScreen(post: post);
+            },
+          )
+        ],
+      ),
+      GoRoute(
+        path: '/app/my-posts',
+        builder: (context, state) => const MyPostsScreen(),
+      ),
+      GoRoute(
+        path: '/app/skill-exchange/create', // Keep create screen top-level
+        builder: (context, state) => const CreateRequestScreen(),
+      ),
+      GoRoute( // This is a nested route within Profile, but defined top-level for clarity of nesting
+          path: '/app/profile/:userId',
+          builder: (context, state) {
+            final userId = state.pathParameters['userId']!;
+            return PublicProfileScreen(userId: userId);
+          },
+          routes: [
+            GoRoute(
+              path: 'book',
+              builder: (context, state) {
+                final userId = state.pathParameters['userId']!;
+                return FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                    final mentor = Mentor.fromFirestore(snapshot.data!);
+                    return SessionBookingScreen(mentor: mentor);
+                  },
+                );
+              },
+            )
+          ]
+      ),
+      GoRoute(
+        path: '/app/profile/edit',
+        builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/app/profile/edit-mentor',
+        builder: (context, state) => const EditMentorProfileScreen(),
+      ),
+      GoRoute(
+        path: '/app/sessions/:sessionId/feedback',
+        builder: (context, state) {
+          final sessionId = state.pathParameters['sessionId']!;
+          final isUserTheMentor = state.extra as bool;
+          return GiveFeedbackScreen(sessionId: sessionId, isUserTheMentor: isUserTheMentor);
+        },
+      )
     ],
   );
 }
@@ -204,22 +212,20 @@ class DashboardScreen extends StatelessWidget {
             subtitle: 'Connect with alumni & professors.',
             onTap: () => context.go('/app/mentors'),
           ),
-          // MODIFIED: This card now navigates to the new posts feed
           _buildDashboardCard(
             context: context,
-            icon: Icons.article, // Changed icon from mic to article
-            title: 'Knowledge Hub', // Renamed from Micro-Talks
+            icon: Icons.article,
+            title: 'Knowledge Hub',
             subtitle: 'Read posts from mentors.',
             onTap: () => context.go('/app/posts'),
           ),
-          // Inside DashboardScreen's ListView children
-          // Inside DashboardScreen's ListView children
           _buildDashboardCard(
             context: context,
             icon: Icons.swap_horiz,
             title: 'Skill Exchange',
-            subtitle: 'Offer help and earn "Wisdom Credits".', // [cite: 79]
-            onTap: () => context.go('/app/skill-exchange'), // MODIFIED
+            // FIXED: Removed the invalid citation markers
+            subtitle: 'Offer help and earn "Wisdom Credits".',
+            onTap: () => context.go('/app/skill-exchange'),
           ),
         ],
       ),

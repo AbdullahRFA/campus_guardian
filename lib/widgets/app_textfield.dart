@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AppTextField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
   final String hintText;
   final bool isObscure;
-  final int? maxLines; // NEW: Added maxLines property
+  final int? maxLines;
+  // NEW: Add parameters for keyboard type and input formatters
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AppTextField({
     super.key,
@@ -13,7 +17,9 @@ class AppTextField extends StatelessWidget {
     required this.labelText,
     this.hintText = '',
     this.isObscure = false,
-    this.maxLines = 1, // NEW: Default to a single line
+    this.maxLines = 1,
+    this.keyboardType, // NEW
+    this.inputFormatters, // NEW
   });
 
   @override
@@ -21,7 +27,10 @@ class AppTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       obscureText: isObscure,
-      maxLines: maxLines, // NEW: Pass the property to the TextFormField
+      maxLines: maxLines,
+      // NEW: Pass the new properties to the underlying TextFormField
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: labelText,
         hintText: hintText,

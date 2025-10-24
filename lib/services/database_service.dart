@@ -7,6 +7,8 @@ class DatabaseService {
   final CollectionReference userCollection = FirebaseFirestore.instance.collection('users');
   final CollectionReference sessionCollection = FirebaseFirestore.instance.collection('sessions');
   final CollectionReference postCollection = FirebaseFirestore.instance.collection('posts');
+  // --- ADD THIS MISSING LINE ---
+  final CollectionReference skillRequestCollection = FirebaseFirestore.instance.collection('skill_requests');
 
   Future<void> updateUserProfile(Map<String, dynamic> userData) async {
     await userCollection.doc(uid).set(userData, SetOptions(merge: true));
@@ -127,12 +129,31 @@ class DatabaseService {
       'text': text,
       'replierId': replierId,
       'replierName': replierName,
-      // FIXED: Changed from serverTimestamp to a client-side timestamp
       'createdAt': Timestamp.now(),
     };
 
     await commentRef.update({
       'replies': FieldValue.arrayUnion([replyData])
+    });
+  }
+
+  Future<void> createSkillRequest({
+    required String title,
+    required String description,
+    required List<String> tags,
+    required int creditsOffered,
+    required String requesterId,
+    required String requesterName,
+  }) async {
+    await skillRequestCollection.add({
+      'title': title,
+      'description': description,
+      'tags': tags,
+      'creditsOffered': creditsOffered,
+      'requesterId': requesterId,
+      'requesterName': requesterName,
+      'status': 'open', // Default status for a new request
+      'createdAt': FieldValue.serverTimestamp(),
     });
   }
 }
