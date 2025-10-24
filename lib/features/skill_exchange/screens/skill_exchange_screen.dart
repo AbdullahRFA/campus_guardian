@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../models/skill_request.dart';
-import '../widgets/request_card.dart';
+import '../models/exchange_post.dart';
+import '../widgets/exchange_card.dart';
 
 class SkillExchangeScreen extends StatelessWidget {
   const SkillExchangeScreen({super.key});
@@ -12,9 +12,8 @@ class SkillExchangeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Skill Exchange')),
       body: StreamBuilder<QuerySnapshot>(
-        // Query the 'skill_requests' collection, ordered by most recent
         stream: FirebaseFirestore.instance
-            .collection('skill_requests')
+            .collection('skill_exchange_posts')
             .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
@@ -25,26 +24,23 @@ class SkillExchangeScreen extends StatelessWidget {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No skill requests have been posted yet.'));
+            return const Center(child: Text('No exchange offers have been posted yet.'));
           }
 
-          // Map the documents to SkillRequest objects
-          final requests = snapshot.data!.docs.map((doc) => SkillRequest.fromFirestore(doc)).toList();
+          final posts = snapshot.data!.docs.map((doc) => ExchangePost.fromFirestore(doc)).toList();
 
           return ListView.builder(
-            itemCount: requests.length,
+            itemCount: posts.length,
             itemBuilder: (context, index) {
-              return RequestCard(request: requests[index]);
+              return ExchangeCard(post: posts[index]);
             },
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.push('/app/skill-exchange/create');
-        },
+        onPressed: () => context.push('/app/skill-exchange/create'),
         child: const Icon(Icons.add),
-        tooltip: 'Post a new request',
+        tooltip: 'Post a new offer',
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );

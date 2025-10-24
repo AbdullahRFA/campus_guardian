@@ -4,11 +4,11 @@ class DatabaseService {
   final String? uid;
   DatabaseService({this.uid});
 
+  // --- Collection References ---
   final CollectionReference userCollection = FirebaseFirestore.instance.collection('users');
   final CollectionReference sessionCollection = FirebaseFirestore.instance.collection('sessions');
   final CollectionReference postCollection = FirebaseFirestore.instance.collection('posts');
-  // --- ADD THIS MISSING LINE ---
-  final CollectionReference skillRequestCollection = FirebaseFirestore.instance.collection('skill_requests');
+  final CollectionReference exchangePostCollection = FirebaseFirestore.instance.collection('skill_exchange_posts');
 
   Future<void> updateUserProfile(Map<String, dynamic> userData) async {
     await userCollection.doc(uid).set(userData, SetOptions(merge: true));
@@ -137,46 +137,52 @@ class DatabaseService {
     });
   }
 
-  Future<void> createSkillRequest({
-    required String title,
-    required String description,
-    required List<String> tags,
-    required int creditsOffered,
-    required String requesterId,
-    required String requesterName,
+  Future<void> createExchangePost({
+    required String offererId,
+    required String offererName,
+    required String offerTitle,
+    required String offerDescription,
+    required List<String> offerTags,
+    required String requestTitle,
+    required String requestDescription,
+    required List<String> requestTags,
   }) async {
-    await skillRequestCollection.add({
-      'title': title,
-      'description': description,
-      'tags': tags,
-      'creditsOffered': creditsOffered,
-      'requesterId': requesterId,
-      'requesterName': requesterName,
-      'status': 'open', // Default status for a new request
+    await exchangePostCollection.add({
+      'offererId': offererId,
+      'offererName': offererName,
+      'status': 'open',
       'createdAt': FieldValue.serverTimestamp(),
+      'offerTitle': offerTitle,
+      'offerDescription': offerDescription,
+      'offerTags': offerTags,
+      'requestTitle': requestTitle,
+      'requestDescription': requestDescription,
+      'requestTags': requestTags,
     });
   }
 
-  // Add these two methods inside your DatabaseService class
-
-// Method to update an existing skill request
-  Future<void> updateSkillRequest({
-    required String requestId,
-    required String title,
-    required String description,
-    required List<String> tags,
-    required int creditsOffered,
+  // --- NEW: Method to update an existing skill exchange post ---
+  Future<void> updateExchangePost({
+    required String postId,
+    required String offerTitle,
+    required String offerDescription,
+    required List<String> offerTags,
+    required String requestTitle,
+    required String requestDescription,
+    required List<String> requestTags,
   }) async {
-    await skillRequestCollection.doc(requestId).update({
-      'title': title,
-      'description': description,
-      'tags': tags,
-      'creditsOffered': creditsOffered,
+    await exchangePostCollection.doc(postId).update({
+      'offerTitle': offerTitle,
+      'offerDescription': offerDescription,
+      'offerTags': offerTags,
+      'requestTitle': requestTitle,
+      'requestDescription': requestDescription,
+      'requestTags': requestTags,
     });
   }
 
-// Method to delete a skill request
-  Future<void> deleteSkillRequest(String requestId) async {
-    await skillRequestCollection.doc(requestId).delete();
+  // --- NEW: Method to delete a skill exchange post ---
+  Future<void> deleteExchangePost(String postId) async {
+    await exchangePostCollection.doc(postId).delete();
   }
 }

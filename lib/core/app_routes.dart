@@ -30,9 +30,9 @@ import 'package:campus_guardian/features/profile/screens/public_profile_screen.d
 // Skill Exchange
 import 'package:campus_guardian/features/skill_exchange/screens/skill_exchange_screen.dart';
 // FIXED: Add the import for CreateRequestScreen
-import 'package:campus_guardian/features/skill_exchange/screens/create_request_screen.dart';
-import 'package:campus_guardian/features/skill_exchange/models/skill_request.dart';
-import 'package:campus_guardian/features/skill_exchange/screens/edit_request_screen.dart';
+import 'package:campus_guardian/features/skill_exchange/screens/create_exchange_screen.dart';
+import 'package:campus_guardian/features/skill_exchange/models/exchange_post.dart';
+import 'package:campus_guardian/features/skill_exchange/screens/edit_exchange_screen.dart';
 
 // KnowledgeBot
 import 'package:campus_guardian/features/knowledgebot/screens/chat_screen.dart';
@@ -154,14 +154,17 @@ class AppRoutes {
           routes: [
             GoRoute(
               path: 'create',
-              builder: (context, state) => const CreateRequestScreen(),
+              builder: (context, state) => const CreateExchangeScreen(),
             ),
             // --- ADD THIS NEW NESTED ROUTE ---
+            // --- USE THIS CORRECTED ROUTE INSTEAD ---
             GoRoute(
-              path: ':requestId/edit', // e.g., /app/skill-exchange/xyz/edit
+              path: ':postId/edit', // Changed to postId for clarity
               builder: (context, state) {
-                final request = state.extra as SkillRequest; // Pass the request object
-                return EditRequestScreen(request: request);
+                // Correctly cast the extra object to ExchangePost
+                final post = state.extra as ExchangePost;
+                // Return the correct EditExchangeScreen widget
+                return EditExchangeScreen(post: post);
               },
             ),
           ]
