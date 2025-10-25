@@ -9,6 +9,7 @@ class DatabaseService {
   final CollectionReference sessionCollection = FirebaseFirestore.instance.collection('sessions');
   final CollectionReference postCollection = FirebaseFirestore.instance.collection('posts');
   final CollectionReference exchangePostCollection = FirebaseFirestore.instance.collection('skill_exchange_posts');
+  final CollectionReference privateChatCollection = FirebaseFirestore.instance.collection('private_chats');
 
   Future<void> updateUserProfile(Map<String, dynamic> userData) async {
     await userCollection.doc(uid).set(userData, SetOptions(merge: true));
@@ -184,5 +185,60 @@ class DatabaseService {
   // --- NEW: Method to delete a skill exchange post ---
   Future<void> deleteExchangePost(String postId) async {
     await exchangePostCollection.doc(postId).delete();
+  }
+
+  // In services/database_service.dart
+
+// ... (keep existing collection references)
+
+// --- NEW & IMPROVED: Method to send a message and manage chat links ---
+  Future<void> sendPrivateMessage({
+    required String chatId,
+    required String text,
+    required String senderId,
+    required String receiverId,
+  }) async {
+    if (text.trim().isEmpty) return;
+
+    // 1. Send the actual message
+    final messageCollection = privateChatCollection.doc(chatId).collection('messages');
+    await messageCollection.add({
+      'text': text,
+      'senderId': senderId,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // 2. Get user names for the chat link metadata
+    final senderDoc = await userCollection.doc(senderId).get();
+    final senderName = (senderDoc.data() as Map<String, dynamic>)['fullName'] ?? 'A User';
+    final receiverDoc = await userCollection.doc(receiverId).get();
+    final receiverName = (receiverDoc.data() as Map<String, dynamic>)['fullName'] ?? 'Another User';
+
+    // 3. Create/update the chat link for both users so it appears in their inbox
+    final timestamp = FieldValue.serverTimestamp();
+
+    // Set the link for the sender
+    await userCollection
+        .doc(senderId)
+        .collection('user_chats')
+        .doc(receiverId)
+        .set({
+      'chatId': chatId,
+      'otherUserId': receiverId,
+      'otherUserName': receiverName,
+      'lastActivity': timestamp,
+    }, SetOptions(merge: true)); // Use merge to create or update
+
+    // Set the link for the receiver
+    await userCollection
+        .doc(receiverId)
+        .collection('user_chats')
+        .doc(senderId)
+        .set({
+      'chatId': chatId,
+      'otherUserId': senderId,
+      'otherUserName': senderName,
+      'lastActivity': timestamp,
+    }, SetOptions(merge: true));
   }
 }

@@ -71,10 +71,32 @@ class ExchangeCard extends StatelessWidget {
             _buildSection(context, 'WANTS', post.requestTitle, post.requestTags),
             const SizedBox(height: 16),
             // Action Button
-            ElevatedButton(
-              onPressed: () {}, // Will implement "Propose Exchange" later
-              child: const Text('Propose Exchange'),
-            )
+            const SizedBox(height: 16),
+            // Only show the "Propose Exchange" button if the current user is NOT the owner
+            if (!isOwner && currentUserId != null)
+              ElevatedButton(
+                onPressed: () {
+                  // --- CHAT LOGIC ---
+                  // 1. Get the two user IDs.
+                  final String user1 = currentUserId;
+                  final String user2 = post.offererId;
+
+                  // 2. Sort the IDs to create a consistent, unique chat ID.
+                  List<String> ids = [user1, user2];
+                  ids.sort();
+                  final String chatId = ids.join('_'); // e.g., "uid1_uid2"
+
+                  // 3. Navigate to the chat screen.
+                  context.push(
+                    '/chat/$chatId',
+                    extra: {
+                      'receiverId': post.offererId,
+                      'receiverName': post.offererName,
+                    },
+                  );
+                },
+                child: const Text('Propose Exchange'),
+              )
           ],
         ),
       ),
