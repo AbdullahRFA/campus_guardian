@@ -1,3 +1,5 @@
+// widgets/exchange_card.dart
+
 import 'package:campus_guardian/services/database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -22,11 +24,11 @@ class ExchangeCard extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Row for Offerer Info and Edit/Delete Menu
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Posted by: ${post.offererName}', style: theme.textTheme.bodySmall),
+                // --- START OF MODIFIED SECTION ---
                 if (isOwner)
                   PopupMenuButton<String>(
                     onSelected: (value) {
@@ -37,7 +39,7 @@ class ExchangeCard extends StatelessWidget {
                           context: context,
                           builder: (ctx) => AlertDialog(
                             title: const Text('Delete Post'),
-                            content: const Text('Are you sure you want to delete this exchange post?'),
+                            content: const Text('Are you sure you want to delete this exchange post? This action cannot be undone.'),
                             actions: [
                               TextButton(child: const Text('Cancel'), onPressed: () => Navigator.of(ctx).pop()),
                               TextButton(
@@ -50,43 +52,56 @@ class ExchangeCard extends StatelessWidget {
                             ],
                           ),
                         );
+                      } else if (value == 'close') {
+                        // This action is for an 'open' post
+                        DatabaseService().updateExchangePostStatus(post.id, 'closed');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Post hidden and moved to your history.'),
+                            backgroundColor: Colors.blue,
+                          ),
+                        );
+                      } else if (value == 'reopen') {
+                        // This action is for a 'closed' post
+                        DatabaseService().updateExchangePostStatus(post.id, 'open');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Post has been re-listed to the public feed.'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
                       }
                     },
                     itemBuilder: (ctx) => [
                       const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                      // Conditionally show "Close" or "Re-list" based on post status
+                      if (post.status == 'open')
+                        const PopupMenuItem(value: 'close', child: Text('Mark as Closed'))
+                      else
+                        const PopupMenuItem(value: 'reopen', child: Text('Re-list as Open')),
+                      const PopupMenuDivider(),
                       const PopupMenuItem(value: 'delete', child: Text('Delete')),
                     ],
                   ),
+                // --- END OF MODIFIED SECTION ---
               ],
             ),
             const Divider(),
-            // Offer Section
             _buildSection(context, 'OFFERS', post.offerTitle, post.offerTags),
-            // "Swap" Icon Divider
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8.0),
               child: Icon(Icons.swap_vert, color: Colors.grey, size: 28),
             ),
-            // Request Section
             _buildSection(context, 'WANTS', post.requestTitle, post.requestTags),
             const SizedBox(height: 16),
-            // Action Button
-            const SizedBox(height: 16),
-            // Only show the "Propose Exchange" button if the current user is NOT the owner
             if (!isOwner && currentUserId != null)
               ElevatedButton(
                 onPressed: () {
-                  // --- CHAT LOGIC ---
-                  // 1. Get the two user IDs.
                   final String user1 = currentUserId;
                   final String user2 = post.offererId;
-
-                  // 2. Sort the IDs to create a consistent, unique chat ID.
                   List<String> ids = [user1, user2];
                   ids.sort();
-                  final String chatId = ids.join('_'); // e.g., "uid1_uid2"
-
-                  // 3. Navigate to the chat screen.
+                  final String chatId = ids.join('_');
                   context.push(
                     '/chat/$chatId',
                     extra: {
@@ -111,11 +126,12 @@ class ExchangeCard extends StatelessWidget {
         const SizedBox(height: 4),
         Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 6.0,
-          runSpacing: 4.0,
-          children: tags.map((tag) => Chip(label: Text(tag), padding: EdgeInsets.zero)).toList(),
-        ),
+        if (tags.isNotEmpty)
+          Wrap(
+            spacing: 6.0,
+            runSpacing: 4.0,
+            children: tags.map((tag) => Chip(label: Text(tag), padding: EdgeInsets.zero)).toList(),
+          ),
       ],
     );
   }

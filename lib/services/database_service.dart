@@ -241,4 +241,9 @@ class DatabaseService {
       'lastActivity': timestamp,
     }, SetOptions(merge: true));
   }
+
+  // --- NEW: Method to update the status of an exchange post ---
+  Future<void> updateExchangePostStatus(String postId, String newStatus) async {
+    await exchangePostCollection.doc(postId).update({'status': newStatus});
+  }
 }

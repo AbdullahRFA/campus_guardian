@@ -36,6 +36,9 @@ import 'package:campus_guardian/features/skill_exchange/screens/skill_exchange_s
 // KnowledgeBot
 import 'package:campus_guardian/features/knowledgebot/screens/chat_screen.dart';
 
+//History Screen
+import 'package:campus_guardian/features/skill_exchange/screens/exchange_history_screen.dart';
+
 // Chat
 import 'package:campus_guardian/features/chat/screens/chat_inbox_screen.dart';
 import 'package:campus_guardian/features/chat/screens/private_chat_screen.dart';
@@ -145,6 +148,11 @@ class AppRoutes {
                   final post = state.extra as ExchangePost;
                   return EditExchangeScreen(post: post);
                 },
+              ),
+              // --- ADD THIS NEW NESTED ROUTE FOR HISTORY ---
+              GoRoute(
+                path: 'history',
+                builder: (context, state) => const ExchangeHistoryScreen(),
               ),
             ],
           ),
