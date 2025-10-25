@@ -38,10 +38,15 @@ class _GiveFeedbackScreenState extends State<GiveFeedbackScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Thank you for your feedback!'), backgroundColor: Colors.green),
         );
-        context.pop();
+        // MODIFICATION: Redirect to the sessions page instead of just popping.
+        context.go('/app/sessions');
       }
     } catch (e) {
-      // Error handling
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e'), backgroundColor: Colors.red),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

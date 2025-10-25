@@ -82,7 +82,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return const Center(child: Text('User profile not found.'));
           }
 
-          var userData = userSnapshot.data!.data() as Map<String, dynamic>;
+          // --- FIX APPLIED HERE ---
+          // 1. Get the data object first. It can be null.
+          final documentData = userSnapshot.data!.data();
+
+          // 2. Check if the data is null (document exists but is empty).
+          if (documentData == null) {
+            return const Center(
+              child: Text('Profile is empty. Please edit your profile to add details.'),
+            );
+          }
+
+          // 3. Now it's safe to cast the data.
+          var userData = documentData as Map<String, dynamic>;
+          // --- END OF FIX ---
 
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -120,7 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: const Text("My Published Posts"),
                     subtitle: const Text("View posts you have created"),
                     trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () => context.push('/app/my-posts'), // Navigate to the new screen
+                    onTap: () => context.push('/app/my-posts'),
                   ),
                 ],
               ),
@@ -145,7 +158,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-
               _buildInfoCard(
                 context,
                 title: 'Session History & Feedback',
@@ -163,29 +175,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
                       }
                       if (sessionSnapshot.hasError) {
-                        print("--- SESSION HISTORY ERROR ---");
-                        print(sessionSnapshot.error);
-                        print("-----------------------------");
-
-                        return Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            children: [
-                              const Icon(Icons.error_outline, color: Colors.red, size: 40),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Could not load session history.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'A Firestore index might be building or a build cache is stale. Please try a full app restart.',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text('Could not load session history.'),
                         );
                       }
 
@@ -196,7 +188,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       return Column(
                         children: sessionSnapshot.data!.docs.map((doc) {
                           final session = Session.fromFirestore(doc);
-                          // FIXED: Pass the currentUserId to the SessionHistoryCard
                           return SessionHistoryCard(session: session, profileOwnerId: currentUserId);
                         }).toList(),
                       );

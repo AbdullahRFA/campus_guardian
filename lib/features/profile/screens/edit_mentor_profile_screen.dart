@@ -43,6 +43,16 @@ class _EditMentorProfileScreenState extends State<EditMentorProfileScreen> {
     if (user != null) {
       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
       final data = doc.data();
+      // --- ADDED DEBUGGING PRINTS ---
+      debugPrint("--- Loading Mentor Data ---");
+      if (data == null) {
+        debugPrint("Document data is null!");
+      } else {
+        debugPrint("Mentor Title from DB: ${data['mentorTitle']}");
+        debugPrint("Is Available from DB: ${data['isMentorAvailable']}");
+      }
+      debugPrint("---------------------------");
+      // --- END OF DEBUGGING ---
       if (data != null && mounted) {
         setState(() {
           _isMentorAvailable = data['isMentorAvailable'] ?? false;

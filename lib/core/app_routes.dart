@@ -65,7 +65,6 @@ class MainShell extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Mentors'),
           BottomNavigationBarItem(icon: Icon(Icons.event_note), label: 'Sessions'),
-          // --- NEW: MESSAGES ITEM ---
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Messages'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
@@ -77,7 +76,6 @@ class MainShell extends StatelessWidget {
     final String location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/app/mentors')) return 1;
     if (location.startsWith('/app/sessions')) return 2;
-    // --- NEW: MESSAGES LOGIC ---
     if (location.startsWith('/app/messages')) return 3;
     if (location.startsWith('/app/profile')) return 4;
     return 0; // Default to Dashboard
@@ -88,7 +86,6 @@ class MainShell extends StatelessWidget {
       case 0: context.go('/app/dashboard'); break;
       case 1: context.go('/app/mentors'); break;
       case 2: context.go('/app/sessions'); break;
-    // --- NEW: MESSAGES CASE ---
       case 3: context.go('/app/messages'); break;
       case 4: context.go('/app/profile'); break;
     }
@@ -106,7 +103,7 @@ class AppRoutes {
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
 
-      // The ShellRoute contains screens with the main bottom navigation bar
+      // The ShellRoute for screens with the bottom nav bar
       ShellRoute(
         builder: (context, state, child) {
           return MainShell(child: child);
@@ -124,7 +121,6 @@ class AppRoutes {
             path: '/app/sessions',
             builder: (context, state) => const MySessionsScreen(),
           ),
-          // --- NEW: MESSAGES INBOX ROUTE ---
           GoRoute(
             path: '/app/messages',
             builder: (context, state) => const ChatInboxScreen(),
@@ -133,11 +129,14 @@ class AppRoutes {
             path: '/app/profile',
             builder: (context, state) => const ProfileScreen(),
           ),
-          // --- CONSOLIDATED SKILL EXCHANGE ROUTE ---
           GoRoute(
             path: '/app/skill-exchange',
             builder: (context, state) => const SkillExchangeScreen(),
             routes: [
+              GoRoute(
+                path: 'history',
+                builder: (context, state) => const ExchangeHistoryScreen(),
+              ),
               GoRoute(
                 path: 'create',
                 builder: (context, state) => const CreateExchangeScreen(),
@@ -149,36 +148,24 @@ class AppRoutes {
                   return EditExchangeScreen(post: post);
                 },
               ),
-              // --- ADD THIS NEW NESTED ROUTE FOR HISTORY ---
-              GoRoute(
-                path: 'history',
-                builder: (context, state) => const ExchangeHistoryScreen(),
-              ),
             ],
           ),
         ],
       ),
 
-      // Other top-level routes (these will cover the whole screen)
+      // Other top-level routes (these cover the whole screen)
       GoRoute(
         path: '/chat',
         builder: (context, state) => const ChatScreen(), // KnowledgeBot
       ),
-      // --- FIXED: PRIVATE CHAT ROUTE ---
       GoRoute(
         path: '/chat/:chatId',
         builder: (context, state) {
           final chatId = state.pathParameters['chatId']!;
           final extra = state.extra as Map<String, dynamic>;
-          // Ensure you pass both receiverId and receiverName when navigating
           final receiverId = extra['receiverId'];
           final receiverName = extra['receiverName'];
-
-          return PrivateChatScreen(
-            chatId: chatId,
-            receiverId: receiverId,
-            receiverName: receiverName,
-          );
+          return PrivateChatScreen(chatId: chatId, receiverId: receiverId, receiverName: receiverName);
         },
       ),
       GoRoute(
@@ -199,8 +186,19 @@ class AppRoutes {
         path: '/app/my-posts',
         builder: (context, state) => const MyPostsScreen(),
       ),
+
+      // --- START OF CORRECTED ROUTE ORDER ---
+      // Specific, static routes must come BEFORE dynamic routes.
       GoRoute(
-        path: '/app/profile/:userId',
+        path: '/app/profile/edit', // Specific route
+        builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/app/profile/edit-mentor', // Specific route
+        builder: (context, state) => const EditMentorProfileScreen(),
+      ),
+      GoRoute(
+        path: '/app/profile/:userId', // Dynamic route (catch-all)
         builder: (context, state) {
           final userId = state.pathParameters['userId']!;
           return PublicProfileScreen(userId: userId);
@@ -214,6 +212,8 @@ class AppRoutes {
                 future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                  // Add a null check for safety
+                  if (snapshot.data!.data() == null) return const Scaffold(body: Center(child: Text("Mentor data is empty.")));
                   final mentor = Mentor.fromFirestore(snapshot.data!);
                   return SessionBookingScreen(mentor: mentor);
                 },
@@ -222,14 +222,8 @@ class AppRoutes {
           )
         ],
       ),
-      GoRoute(
-        path: '/app/profile/edit',
-        builder: (context, state) => const EditProfileScreen(),
-      ),
-      GoRoute(
-        path: '/app/profile/edit-mentor',
-        builder: (context, state) => const EditMentorProfileScreen(),
-      ),
+      // --- END OF CORRECTED ROUTE ORDER ---
+
       GoRoute(
         path: '/app/sessions/:sessionId/feedback',
         builder: (context, state) {
@@ -242,9 +236,7 @@ class AppRoutes {
   );
 }
 
-// NOTE: The DashboardScreen widget is unchanged. It's included here because
-// it was in your original file.
-
+// NOTE: The DashboardScreen widget is unchanged.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 

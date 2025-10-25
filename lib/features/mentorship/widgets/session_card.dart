@@ -1,14 +1,15 @@
+// lib/features/mentorship/widgets/session_card.dart
+
 import 'package:campus_guardian/services/database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // Import go_router for navigation
+import 'package:go_router/go_router.dart';
 import '../models/session.dart';
 
 class SessionCard extends StatelessWidget {
   final Session session;
   const SessionCard({super.key, required this.session});
 
-  // Helper to determine chip color based on status
   Color _getStatusColor(String status) {
     switch (status) {
       case 'confirmed':
@@ -27,6 +28,7 @@ class SessionCard extends StatelessWidget {
   /// Builds the correct row of action buttons based on user role and session status.
   Widget _buildActionButtons(BuildContext context, bool isUserTheMentor, Session session) {
     final dbService = DatabaseService();
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
     // --- Button Logic for the Mentor ---
     if (isUserTheMentor) {
@@ -55,19 +57,30 @@ class SessionCard extends StatelessWidget {
           return Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              // --- NEW MESSAGE BUTTON FOR MENTOR ---
+              TextButton(
+                child: const Text('MESSAGE MENTEE'),
+                onPressed: () {
+                  List<String> ids = [currentUserId, session.menteeId];
+                  ids.sort();
+                  final chatId = ids.join('_');
+                  context.push(
+                    '/chat/$chatId',
+                    extra: {
+                      'receiverId': session.menteeId,
+                      'receiverName': session.menteeName,
+                    },
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
               TextButton(
                 onPressed: () => dbService.updateSessionStatus(session.id, 'completed'),
                 child: const Text('MARK AS COMPLETE', style: TextStyle(color: Colors.blue)),
               ),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: () => dbService.updateSessionStatus(session.id, 'cancelled'),
-                child: const Text('CANCEL', style: TextStyle(color: Colors.red)),
-              ),
             ],
           );
         case 'completed':
-        // Show feedback button if the mentor has not given feedback yet
           if (session.mentorFeedback == null) {
             return Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -79,41 +92,68 @@ class SessionCard extends StatelessWidget {
               ],
             );
           }
-          return const SizedBox.shrink(); // Hide button if feedback is already given
+          return const SizedBox.shrink();
         default:
           return const SizedBox.shrink();
       }
     }
     // --- Button Logic for the Mentee ---
     else {
-      if (session.status == 'pending' || session.status == 'confirmed') {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            TextButton(
-              onPressed: () => dbService.updateSessionStatus(session.id, 'cancelled'),
-              child: const Text('CANCEL', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      }
-      if (session.status == 'completed') {
-        // Show feedback button if the mentee has not given feedback yet
-        if (session.menteeFeedback == null) {
+      switch (session.status) {
+        case 'pending':
           return Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () => context.go('/app/sessions/${session.id}/feedback', extra: false),
-                child: const Text('GIVE FEEDBACK', style: TextStyle(color: Colors.purple)),
+                onPressed: () => dbService.updateSessionStatus(session.id, 'cancelled'),
+                child: const Text('CANCEL', style: TextStyle(color: Colors.red)),
               ),
             ],
           );
-        }
+        case 'confirmed':
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // --- NEW MESSAGE BUTTON FOR MENTEE ---
+              TextButton(
+                child: const Text('MESSAGE MENTOR'),
+                onPressed: () {
+                  List<String> ids = [currentUserId, session.mentorId];
+                  ids.sort();
+                  final chatId = ids.join('_');
+                  context.push(
+                    '/chat/$chatId',
+                    extra: {
+                      'receiverId': session.mentorId,
+                      'receiverName': session.mentorName,
+                    },
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: () => dbService.updateSessionStatus(session.id, 'cancelled'),
+                child: const Text('CANCEL', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          );
+        case 'completed':
+          if (session.menteeFeedback == null) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => context.go('/app/sessions/${session.id}/feedback', extra: false),
+                  child: const Text('GIVE FEEDBACK', style: TextStyle(color: Colors.purple)),
+                ),
+              ],
+            );
+          }
+          return const SizedBox.shrink();
+        default:
+          return const SizedBox.shrink();
       }
     }
-
-    return const SizedBox.shrink(); // Default to no buttons for other states
   }
 
   @override
@@ -124,7 +164,6 @@ class SessionCard extends StatelessWidget {
     final otherPersonName = isUserTheMentor ? session.menteeName : session.mentorName;
     final role = isUserTheMentor ? 'Mentee' : 'Mentor';
 
-    // NEW: Get the feedback and rating given BY the other person
     final feedbackReceived = isUserTheMentor ? session.menteeFeedback : session.mentorFeedback;
     final ratingReceived = isUserTheMentor ? session.menteeRating : session.mentorRating;
 
@@ -148,8 +187,6 @@ class SessionCard extends StatelessWidget {
                 backgroundColor: _getStatusColor(session.status),
               ),
             ),
-
-            // NEW: Show Topic, Feedback, and Rating
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
               child: Column(
@@ -163,7 +200,6 @@ class SessionCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Only show feedback section if the session is completed
                   if (session.status == 'completed' && feedbackReceived != null) ...[
                     const SizedBox(height: 8),
                     Row(

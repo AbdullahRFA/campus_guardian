@@ -27,6 +27,7 @@ class PublicProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("Attempting to fetch profile for userId: '$userId'");
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Profile'),
@@ -41,14 +42,19 @@ class PublicProfileScreen extends StatelessWidget {
             return const Center(child: Text('User profile not found.'));
           }
 
-          var userData = userSnapshot.data!.data() as Map<String, dynamic>;
+          // --- FIX APPLIED HERE ---
+          final documentData = userSnapshot.data!.data();
+          if (documentData == null) {
+            return const Center(child: Text('This user\'s profile is empty.'));
+          }
+          var userData = documentData as Map<String, dynamic>;
+          // --- END OF FIX ---
 
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             children: [
               _buildProfileHeader(context, userData),
               const SizedBox(height: 16),
-              // Conditionally show the Mentorship Profile card if the user is a mentor
               if (userData['isMentorAvailable'] == true) ...[
                 _buildInfoCard(
                   context,
@@ -57,7 +63,6 @@ class PublicProfileScreen extends StatelessWidget {
                   children: [
                     _buildProfileInfoTile(Icons.work, 'Title', userData['mentorTitle']),
                     _buildProfileInfoTile(Icons.info_outline, 'Bio', userData['mentorBio']),
-                    // Displaying expertise as chips
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: Wrap(
@@ -94,7 +99,6 @@ class PublicProfileScreen extends StatelessWidget {
                       return Column(
                         children: sessionSnapshot.data!.docs.map((doc) {
                           final session = Session.fromFirestore(doc);
-                          // FIXED: Pass the userId of the public profile to the card
                           return SessionHistoryCard(session: session, profileOwnerId: userId);
                         }).toList(),
                       );
@@ -106,29 +110,31 @@ class PublicProfileScreen extends StatelessWidget {
           );
         },
       ),
-      // Conditionally shows the "Book a Session" button at the bottom
       bottomNavigationBar: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const SizedBox.shrink();
 
-          var userData = snapshot.data!.data() as Map<String, dynamic>;
+          // --- ADDED NULL CHECK FOR SAFETY ---
+          final data = snapshot.data!.data();
+          if (data == null) return const SizedBox.shrink();
+          var userData = data as Map<String, dynamic>;
+          // ---
+
           bool isMentor = userData['isMentorAvailable'] ?? false;
 
-          // Only show the button if the viewed user is an available mentor
           if (isMentor) {
             return Padding(
               padding: const EdgeInsets.all(16.0),
               child: AppButton(
                 text: 'Book a Session',
                 onPressed: () {
-                  // Navigate to the booking screen for this user
                   context.go('/app/profile/$userId/book');
                 },
               ),
             );
           } else {
-            return const SizedBox.shrink(); // Show nothing if not a mentor
+            return const SizedBox.shrink();
           }
         },
       ),
