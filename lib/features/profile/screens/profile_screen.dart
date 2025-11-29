@@ -67,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             tooltip: 'Logout',
             onPressed: () {
               AuthService().signOut();
-              context.go('/login');
+              context.push('/login');
             },
           )
         ],

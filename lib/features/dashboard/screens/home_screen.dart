@@ -27,10 +27,10 @@ class _HomeScreenState extends State<HomeScreen> {
       // Already on home, do nothing or context.go('/');
         break;
       case 1:
-        context.go('/mentors');
+        context.push('/mentors');
         break;
       case 2:
-        context.go('/profile');
+        context.push('/profile');
         break;
     }
   }

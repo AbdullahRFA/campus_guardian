@@ -129,7 +129,7 @@ class PublicProfileScreen extends StatelessWidget {
               child: AppButton(
                 text: 'Book a Session',
                 onPressed: () {
-                  context.go('/app/profile/$userId/book');
+                  context.push('/app/profile/$userId/book');
                 },
               ),
             );

@@ -39,7 +39,7 @@ class _GiveFeedbackScreenState extends State<GiveFeedbackScreen> {
           const SnackBar(content: Text('Thank you for your feedback!'), backgroundColor: Colors.green),
         );
         // MODIFICATION: Redirect to the sessions page instead of just popping.
-        context.go('/app/sessions');
+        context.push('/app/sessions');
       }
     } catch (e) {
       if (mounted) {

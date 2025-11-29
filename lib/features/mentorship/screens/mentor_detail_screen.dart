@@ -91,7 +91,7 @@ class MentorDetailScreen extends StatelessWidget {
         child: AppButton(
           text: 'Book a Session',
           onPressed: () {
-            context.go('/app/mentors/${mentor.id}/book');
+            context.push('/app/mentors/${mentor.id}/book');
           },
         ),
       ),

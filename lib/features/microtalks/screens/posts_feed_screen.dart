@@ -63,7 +63,7 @@ class _PostsFeedScreenState extends State<PostsFeedScreen> {
       ),
       floatingActionButton: _isUserMentor
           ? FloatingActionButton(
-        onPressed: () => context.go('/app/posts/add'),
+        onPressed: () => context.push('/app/posts/add'),
         child: const Icon(Icons.add),
       )
           : null,
