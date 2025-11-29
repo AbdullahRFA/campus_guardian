@@ -46,6 +46,9 @@ import 'package:campus_guardian/features/skill_exchange/screens/exchange_history
 import 'package:campus_guardian/features/chat/screens/chat_inbox_screen.dart';
 import 'package:campus_guardian/features/chat/screens/private_chat_screen.dart';
 
+// Search
+import 'package:campus_guardian/features/dashboard/screens/global_search_delegate.dart';
+
 class MainShell extends StatelessWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
@@ -298,7 +301,22 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        // --- ADD THIS ACTIONS BLOCK ---
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: GlobalSearchDelegate(),
+              );
+            },
+          ),
+        ],
+        // ------------------------------
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [

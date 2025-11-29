@@ -5,11 +5,16 @@ class DatabaseService {
   DatabaseService({this.uid});
 
   // --- Collection References ---
-  final CollectionReference userCollection = FirebaseFirestore.instance.collection('users');
-  final CollectionReference sessionCollection = FirebaseFirestore.instance.collection('sessions');
-  final CollectionReference postCollection = FirebaseFirestore.instance.collection('posts');
-  final CollectionReference exchangePostCollection = FirebaseFirestore.instance.collection('skill_exchange_posts');
-  final CollectionReference privateChatCollection = FirebaseFirestore.instance.collection('private_chats');
+  final CollectionReference userCollection = FirebaseFirestore.instance
+      .collection('users');
+  final CollectionReference sessionCollection = FirebaseFirestore.instance
+      .collection('sessions');
+  final CollectionReference postCollection = FirebaseFirestore.instance
+      .collection('posts');
+  final CollectionReference exchangePostCollection = FirebaseFirestore.instance
+      .collection('skill_exchange_posts');
+  final CollectionReference privateChatCollection = FirebaseFirestore.instance
+      .collection('private_chats');
 
   Future<void> updateUserProfile(Map<String, dynamic> userData) async {
     await userCollection.doc(uid).set(userData, SetOptions(merge: true));
@@ -145,7 +150,10 @@ class DatabaseService {
     required String replierName,
   }) async {
     if (text.trim().isEmpty) return;
-    final commentRef = postCollection.doc(postId).collection('comments').doc(commentId);
+    final commentRef = postCollection
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId);
 
     final replyData = {
       'text': text,
@@ -155,7 +163,7 @@ class DatabaseService {
     };
 
     await commentRef.update({
-      'replies': FieldValue.arrayUnion([replyData])
+      'replies': FieldValue.arrayUnion([replyData]),
     });
   }
 
@@ -223,7 +231,9 @@ class DatabaseService {
     if (text.trim().isEmpty) return;
 
     // 1. Send the actual message
-    final messageCollection = privateChatCollection.doc(chatId).collection('messages');
+    final messageCollection = privateChatCollection
+        .doc(chatId)
+        .collection('messages');
     await messageCollection.add({
       'text': text,
       'senderId': senderId,
@@ -232,9 +242,12 @@ class DatabaseService {
 
     // 2. Get user names for the chat link metadata
     final senderDoc = await userCollection.doc(senderId).get();
-    final senderName = (senderDoc.data() as Map<String, dynamic>)['fullName'] ?? 'A User';
+    final senderName =
+        (senderDoc.data() as Map<String, dynamic>)['fullName'] ?? 'A User';
     final receiverDoc = await userCollection.doc(receiverId).get();
-    final receiverName = (receiverDoc.data() as Map<String, dynamic>)['fullName'] ?? 'Another User';
+    final receiverName =
+        (receiverDoc.data() as Map<String, dynamic>)['fullName'] ??
+        'Another User';
 
     // 3. Create/update the chat link for both users so it appears in their inbox
     final timestamp = FieldValue.serverTimestamp();
@@ -245,11 +258,11 @@ class DatabaseService {
         .collection('user_chats')
         .doc(receiverId)
         .set({
-      'chatId': chatId,
-      'otherUserId': receiverId,
-      'otherUserName': receiverName,
-      'lastActivity': timestamp,
-    }, SetOptions(merge: true));
+          'chatId': chatId,
+          'otherUserId': receiverId,
+          'otherUserName': receiverName,
+          'lastActivity': timestamp,
+        }, SetOptions(merge: true));
 
     // Set the link for the receiver
     await userCollection
@@ -257,10 +270,29 @@ class DatabaseService {
         .collection('user_chats')
         .doc(senderId)
         .set({
-      'chatId': chatId,
-      'otherUserId': senderId,
-      'otherUserName': senderName,
-      'lastActivity': timestamp,
-    }, SetOptions(merge: true));
+          'chatId': chatId,
+          'otherUserId': senderId,
+          'otherUserName': senderName,
+          'lastActivity': timestamp,
+        }, SetOptions(merge: true));
   }
+
+  // --- SEARCH HELPERS ---
+
+  // Fetch all mentors
+  Future<QuerySnapshot> getAllMentors() async {
+    return await userCollection.where('isMentorAvailable', isEqualTo: true).get();
+  }
+
+  // Fetch all knowledge hub posts
+  Future<QuerySnapshot> getAllPosts() async {
+    return await postCollection.orderBy('createdAt', descending: true).get();
+  }
+
+  // Fetch all skill exchange posts
+  Future<QuerySnapshot> getAllExchangePosts() async {
+    return await exchangePostCollection.where('status', isEqualTo: 'open').get();
+  }
+
+
 }
