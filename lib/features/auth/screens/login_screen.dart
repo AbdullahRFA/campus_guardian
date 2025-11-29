@@ -67,6 +67,20 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 20),
             AppTextField(controller: _passwordController, labelText: 'Password', isObscure: true),
             const SizedBox(height: 40),
+
+            // --- NEW CODE START ---
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => context.push('/forgot-password'),
+                child: const Text('Forgot Password?'),
+              ),
+            ),
+            // --- NEW CODE END ---
+
+
+            const SizedBox(height: 40),
+
             AppButton(
               text: 'Login',
               onPressed: _isLoading ? null : _handleSignIn,

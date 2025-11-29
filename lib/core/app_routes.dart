@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:campus_guardian/features/auth/screens/auth_gate.dart';
 import 'package:campus_guardian/features/auth/screens/login_screen.dart';
 import 'package:campus_guardian/features/auth/screens/signup_screen.dart';
+import 'package:campus_guardian/features/auth/screens/forget_password_screen.dart';
 
 // Knowledge Hub (Posts)
 import 'package:campus_guardian/features/microtalks/models/post.dart';
@@ -104,6 +105,7 @@ class AppRoutes {
       GoRoute(path: '/', builder: (context, state) => const AuthGate()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
+      GoRoute(path: '/forgot-password', builder: (context, state) => const ForgetPasswordScreen()),
 
       // The ShellRoute for screens with the bottom nav bar
       ShellRoute(

@@ -50,5 +50,19 @@ class AuthService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
+
+  // RESET PASSWORD
+  Future<String?> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      return null; // Success
+    } on FirebaseAuthException catch (e) {
+      return e.message; // Return error message
+    } catch (e) {
+      return 'An unknown error occurred.';
+    }
+  }
+
+
 }
 
