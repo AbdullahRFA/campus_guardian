@@ -10,6 +10,7 @@ import 'package:campus_guardian/features/auth/screens/signup_screen.dart';
 // Knowledge Hub (Posts)
 import 'package:campus_guardian/features/microtalks/models/post.dart';
 import 'package:campus_guardian/features/microtalks/screens/add_post_screen.dart';
+import 'package:campus_guardian/features/microtalks/screens/edit_post_screen.dart'; // <--- NEW IMPORT
 import 'package:campus_guardian/features/microtalks/screens/my_posts_screen.dart';
 import 'package:campus_guardian/features/microtalks/screens/post_detail_screen.dart';
 import 'package:campus_guardian/features/microtalks/screens/posts_feed_screen.dart';
@@ -82,7 +83,7 @@ class MainShell extends StatelessWidget {
   }
 
   void _onItemTapped(int index, BuildContext context) {
-    // For the Bottom Bar, we use context.go because we usually want to switch tabs, not stack them.
+    // For the Bottom Bar, we use context.push to allow back navigation
     switch (index) {
       case 0: context.push('/app/dashboard'); break;
       case 1: context.push('/app/mentors'); break;
@@ -180,7 +181,15 @@ class AppRoutes {
               final post = state.extra as Post;
               return PostDetailScreen(post: post);
             },
-          )
+          ),
+          // --- NEW ROUTE FOR EDITING POSTS ---
+          GoRoute(
+            path: ':postId/edit',
+            builder: (context, state) {
+              final post = state.extra as Post;
+              return EditPostScreen(post: post);
+            },
+          ),
         ],
       ),
       GoRoute(
@@ -250,8 +259,6 @@ class DashboardScreen extends StatelessWidget {
             icon: Icons.people_alt,
             title: 'Find a Mentor',
             subtitle: 'Connect with alumni & professors.',
-            // FIX 1: Changed from context.go to context.push
-            // This creates a "history" so the back button knows to come back to Dashboard.
             onTap: () => context.push('/app/mentors'),
           ),
           _buildDashboardCard(
@@ -259,7 +266,6 @@ class DashboardScreen extends StatelessWidget {
             icon: Icons.article,
             title: 'Knowledge Hub',
             subtitle: 'Read posts from mentors.',
-            // FIX 2: Changed from context.go to context.push
             onTap: () => context.push('/app/posts'),
           ),
           _buildDashboardCard(
@@ -267,7 +273,6 @@ class DashboardScreen extends StatelessWidget {
             icon: Icons.swap_horiz,
             title: 'Skill Exchange',
             subtitle: 'Offer help and earn "Wisdom Credits".',
-            // FIX 3: Changed from context.go to context.push
             onTap: () => context.push('/app/skill-exchange'),
           ),
         ],

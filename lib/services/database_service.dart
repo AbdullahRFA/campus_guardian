@@ -60,6 +60,8 @@ class DatabaseService {
     }
   }
 
+  // --- POSTS (Knowledge Hub) ---
+
   Future<void> createPost({
     required String title,
     required String description,
@@ -78,6 +80,25 @@ class DatabaseService {
       'createdAt': FieldValue.serverTimestamp(),
       'likes': [],
     });
+  }
+
+  // NEW: Update an existing post
+  Future<void> updatePost({
+    required String postId,
+    required String title,
+    required String description,
+    required String thumbnailUrl,
+  }) async {
+    await postCollection.doc(postId).update({
+      'title': title,
+      'description': description,
+      'thumbnailUrl': thumbnailUrl,
+    });
+  }
+
+  // NEW: Delete a post
+  Future<void> deletePost(String postId) async {
+    await postCollection.doc(postId).delete();
   }
 
   Future<void> togglePostLike(String postId, String userId) async {
@@ -138,6 +159,8 @@ class DatabaseService {
     });
   }
 
+  // --- SKILL EXCHANGE ---
+
   Future<void> createExchangePost({
     required String offererId,
     required String offererName,
@@ -162,7 +185,6 @@ class DatabaseService {
     });
   }
 
-  // --- NEW: Method to update an existing skill exchange post ---
   Future<void> updateExchangePost({
     required String postId,
     required String offerTitle,
@@ -182,16 +204,16 @@ class DatabaseService {
     });
   }
 
-  // --- NEW: Method to delete a skill exchange post ---
   Future<void> deleteExchangePost(String postId) async {
     await exchangePostCollection.doc(postId).delete();
   }
 
-  // In services/database_service.dart
+  Future<void> updateExchangePostStatus(String postId, String newStatus) async {
+    await exchangePostCollection.doc(postId).update({'status': newStatus});
+  }
 
-// ... (keep existing collection references)
+  // --- CHAT MESSAGING ---
 
-// --- NEW & IMPROVED: Method to send a message and manage chat links ---
   Future<void> sendPrivateMessage({
     required String chatId,
     required String text,
@@ -227,7 +249,7 @@ class DatabaseService {
       'otherUserId': receiverId,
       'otherUserName': receiverName,
       'lastActivity': timestamp,
-    }, SetOptions(merge: true)); // Use merge to create or update
+    }, SetOptions(merge: true));
 
     // Set the link for the receiver
     await userCollection
@@ -240,10 +262,5 @@ class DatabaseService {
       'otherUserName': senderName,
       'lastActivity': timestamp,
     }, SetOptions(merge: true));
-  }
-
-  // --- NEW: Method to update the status of an exchange post ---
-  Future<void> updateExchangePostStatus(String postId, String newStatus) async {
-    await exchangePostCollection.doc(postId).update({'status': newStatus});
   }
 }
