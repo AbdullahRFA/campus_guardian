@@ -86,7 +86,7 @@ class SessionCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () => context.go('/app/sessions/${session.id}/feedback', extra: true),
+                  onPressed: () => context.push('/app/sessions/${session.id}/feedback', extra: true),
                   child: const Text('GIVE FEEDBACK', style: TextStyle(color: Colors.purple)),
                 ),
               ],
@@ -143,7 +143,7 @@ class SessionCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () => context.go('/app/sessions/${session.id}/feedback', extra: false),
+                  onPressed: () => context.push('/app/sessions/${session.id}/feedback', extra: false),
                   child: const Text('GIVE FEEDBACK', style: TextStyle(color: Colors.purple)),
                 ),
               ],

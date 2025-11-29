@@ -33,7 +33,8 @@ class ExchangeCard extends StatelessWidget {
                   PopupMenuButton<String>(
                     onSelected: (value) {
                       if (value == 'edit') {
-                        context.go('/app/skill-exchange/${post.id}/edit', extra: post);
+                        // FIX: Use context.push so the back button returns to the list
+                        context.push('/app/skill-exchange/${post.id}/edit', extra: post);
                       } else if (value == 'delete') {
                         showDialog(
                           context: context,

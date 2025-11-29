@@ -25,7 +25,8 @@ class PostCard extends StatelessWidget {
         children: [
           InkWell(
             onTap: () {
-              context.go('/app/posts/${post.id}', extra: post);
+              // FIX: Use context.push so the back button returns to the feed
+              context.push('/app/posts/${post.id}', extra: post);
             },
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,7 +99,8 @@ class PostCard extends StatelessWidget {
                     style: TextStyle(color: Colors.grey[700]),
                   ),
                   onPressed: () {
-                    context.go('/app/posts/${post.id}', extra: post);
+                    // FIX: Use context.push so the back button returns to the feed
+                    context.push('/app/posts/${post.id}', extra: post);
                   },
                 ),
                 // 3. SHARE BUTTON (Right)

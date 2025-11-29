@@ -82,12 +82,13 @@ class MainShell extends StatelessWidget {
   }
 
   void _onItemTapped(int index, BuildContext context) {
+    // For the Bottom Bar, we use context.go because we usually want to switch tabs, not stack them.
     switch (index) {
-      case 0: context.go('/app/dashboard'); break;
-      case 1: context.go('/app/mentors'); break;
-      case 2: context.go('/app/sessions'); break;
-      case 3: context.go('/app/messages'); break;
-      case 4: context.go('/app/profile'); break;
+      case 0: context.push('/app/dashboard'); break;
+      case 1: context.push('/app/mentors'); break;
+      case 2: context.push('/app/sessions'); break;
+      case 3: context.push('/app/messages'); break;
+      case 4: context.push('/app/profile'); break;
     }
   }
 }
@@ -187,18 +188,17 @@ class AppRoutes {
         builder: (context, state) => const MyPostsScreen(),
       ),
 
-      // --- START OF CORRECTED ROUTE ORDER ---
       // Specific, static routes must come BEFORE dynamic routes.
       GoRoute(
-        path: '/app/profile/edit', // Specific route
+        path: '/app/profile/edit',
         builder: (context, state) => const EditProfileScreen(),
       ),
       GoRoute(
-        path: '/app/profile/edit-mentor', // Specific route
+        path: '/app/profile/edit-mentor',
         builder: (context, state) => const EditMentorProfileScreen(),
       ),
       GoRoute(
-        path: '/app/profile/:userId', // Dynamic route (catch-all)
+        path: '/app/profile/:userId',
         builder: (context, state) {
           final userId = state.pathParameters['userId']!;
           return PublicProfileScreen(userId: userId);
@@ -212,7 +212,6 @@ class AppRoutes {
                 future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-                  // Add a null check for safety
                   if (snapshot.data!.data() == null) return const Scaffold(body: Center(child: Text("Mentor data is empty.")));
                   final mentor = Mentor.fromFirestore(snapshot.data!);
                   return SessionBookingScreen(mentor: mentor);
@@ -222,8 +221,6 @@ class AppRoutes {
           )
         ],
       ),
-      // --- END OF CORRECTED ROUTE ORDER ---
-
       GoRoute(
         path: '/app/sessions/:sessionId/feedback',
         builder: (context, state) {
@@ -236,7 +233,6 @@ class AppRoutes {
   );
 }
 
-// NOTE: The DashboardScreen widget is unchanged.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
@@ -254,21 +250,25 @@ class DashboardScreen extends StatelessWidget {
             icon: Icons.people_alt,
             title: 'Find a Mentor',
             subtitle: 'Connect with alumni & professors.',
-            onTap: () => context.go('/app/mentors'),
+            // FIX 1: Changed from context.go to context.push
+            // This creates a "history" so the back button knows to come back to Dashboard.
+            onTap: () => context.push('/app/mentors'),
           ),
           _buildDashboardCard(
             context: context,
             icon: Icons.article,
             title: 'Knowledge Hub',
             subtitle: 'Read posts from mentors.',
-            onTap: () => context.go('/app/posts'),
+            // FIX 2: Changed from context.go to context.push
+            onTap: () => context.push('/app/posts'),
           ),
           _buildDashboardCard(
             context: context,
             icon: Icons.swap_horiz,
             title: 'Skill Exchange',
             subtitle: 'Offer help and earn "Wisdom Credits".',
-            onTap: () => context.go('/app/skill-exchange'),
+            // FIX 3: Changed from context.go to context.push
+            onTap: () => context.push('/app/skill-exchange'),
           ),
         ],
       ),
