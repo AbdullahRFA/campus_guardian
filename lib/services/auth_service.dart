@@ -51,7 +51,7 @@ class AuthService {
     await _auth.signOut();
   }
 
-  // RESET PASSWORD
+  // RESET PASSWORD (Added in Feature 1)
   Future<String?> sendPasswordResetEmail(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
@@ -63,6 +63,29 @@ class AuthService {
     }
   }
 
+  // --- NEW METHOD ADDED HERE ---
+  // CHANGE PASSWORD (Added in Feature 2)
+  Future<String?> changePassword({required String currentPassword, required String newPassword}) async {
+    final user = _auth.currentUser;
+    if (user == null) return 'No user logged in.';
 
+    // Create credentials with the OLD password to re-authenticate
+    final cred = EmailAuthProvider.credential(
+      email: user.email!,
+      password: currentPassword,
+    );
+
+    try {
+      // 1. Re-authenticate the user (This proves they know their current password)
+      await user.reauthenticateWithCredential(cred);
+
+      // 2. Update the password
+      await user.updatePassword(newPassword);
+      return null; // Success
+    } on FirebaseAuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return 'An unknown error occurred.';
+    }
+  }
 }
-

@@ -7,6 +7,7 @@ import 'package:campus_guardian/features/auth/screens/auth_gate.dart';
 import 'package:campus_guardian/features/auth/screens/login_screen.dart';
 import 'package:campus_guardian/features/auth/screens/signup_screen.dart';
 import 'package:campus_guardian/features/auth/screens/forget_password_screen.dart';
+import 'package:campus_guardian/features/profile/screens/change_password_screen.dart';
 
 // Knowledge Hub (Posts)
 import 'package:campus_guardian/features/microtalks/models/post.dart';
@@ -64,9 +65,15 @@ class MainShell extends StatelessWidget {
         onTap: (index) => _onItemTapped(index, context),
         type: BottomNavigationBarType.fixed, // Use 'fixed' for 4+ items
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Mentors'),
-          BottomNavigationBarItem(icon: Icon(Icons.event_note), label: 'Sessions'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event_note),
+            label: 'Sessions',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Messages'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
@@ -86,11 +93,21 @@ class MainShell extends StatelessWidget {
   void _onItemTapped(int index, BuildContext context) {
     // For the Bottom Bar, we use context.push to allow back navigation
     switch (index) {
-      case 0: context.push('/app/dashboard'); break;
-      case 1: context.push('/app/mentors'); break;
-      case 2: context.push('/app/sessions'); break;
-      case 3: context.push('/app/messages'); break;
-      case 4: context.push('/app/profile'); break;
+      case 0:
+        context.push('/app/dashboard');
+        break;
+      case 1:
+        context.push('/app/mentors');
+        break;
+      case 2:
+        context.push('/app/sessions');
+        break;
+      case 3:
+        context.push('/app/messages');
+        break;
+      case 4:
+        context.push('/app/profile');
+        break;
     }
   }
 }
@@ -104,8 +121,18 @@ class AppRoutes {
       // Top-level auth routes
       GoRoute(path: '/', builder: (context, state) => const AuthGate()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
-      GoRoute(path: '/forgot-password', builder: (context, state) => const ForgetPasswordScreen()),
+      GoRoute(
+        path: '/signup',
+        builder: (context, state) => const SignupScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgetPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/change-password',
+        builder: (context, state) => const ChangePasswordScreen(),
+      ),
 
       // The ShellRoute for screens with the bottom nav bar
       ShellRoute(
@@ -113,6 +140,7 @@ class AppRoutes {
           return MainShell(child: child);
         },
         routes: [
+          // Bottom-level routes
           GoRoute(
             path: '/app/dashboard',
             builder: (context, state) => const DashboardScreen(),
@@ -154,6 +182,7 @@ class AppRoutes {
               ),
             ],
           ),
+
         ],
       ),
 
@@ -169,14 +198,21 @@ class AppRoutes {
           final extra = state.extra as Map<String, dynamic>;
           final receiverId = extra['receiverId'];
           final receiverName = extra['receiverName'];
-          return PrivateChatScreen(chatId: chatId, receiverId: receiverId, receiverName: receiverName);
+          return PrivateChatScreen(
+            chatId: chatId,
+            receiverId: receiverId,
+            receiverName: receiverName,
+          );
         },
       ),
       GoRoute(
         path: '/app/posts',
         builder: (context, state) => const PostsFeedScreen(),
         routes: [
-          GoRoute(path: 'add', builder: (context, state) => const AddPostScreen()),
+          GoRoute(
+            path: 'add',
+            builder: (context, state) => const AddPostScreen(),
+          ),
           GoRoute(
             path: ':postId',
             builder: (context, state) {
@@ -220,16 +256,25 @@ class AppRoutes {
             builder: (context, state) {
               final userId = state.pathParameters['userId']!;
               return FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+                future: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(userId)
+                    .get(),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-                  if (snapshot.data!.data() == null) return const Scaffold(body: Center(child: Text("Mentor data is empty.")));
+                  if (!snapshot.hasData)
+                    return const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    );
+                  if (snapshot.data!.data() == null)
+                    return const Scaffold(
+                      body: Center(child: Text("Mentor data is empty.")),
+                    );
                   final mentor = Mentor.fromFirestore(snapshot.data!);
                   return SessionBookingScreen(mentor: mentor);
                 },
               );
             },
-          )
+          ),
         ],
       ),
       GoRoute(
@@ -237,9 +282,12 @@ class AppRoutes {
         builder: (context, state) {
           final sessionId = state.pathParameters['sessionId']!;
           final isUserTheMentor = state.extra as bool;
-          return GiveFeedbackScreen(sessionId: sessionId, isUserTheMentor: isUserTheMentor);
+          return GiveFeedbackScreen(
+            sessionId: sessionId,
+            isUserTheMentor: isUserTheMentor,
+          );
         },
-      )
+      ),
     ],
   );
 }
@@ -250,9 +298,7 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-      ),
+      appBar: AppBar(title: const Text('Dashboard')),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
@@ -301,11 +347,7 @@ class DashboardScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              Icon(
-                icon,
-                size: 40.0,
-                color: theme.colorScheme.primary,
-              ),
+              Icon(icon, size: 40.0, color: theme.colorScheme.primary),
               const SizedBox(width: 16.0),
               Expanded(
                 child: Column(
@@ -313,13 +355,12 @@ class DashboardScreen extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4.0),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodyMedium,
-                    ),
+                    Text(subtitle, style: theme.textTheme.bodyMedium),
                   ],
                 ),
               ),

@@ -214,6 +214,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             const SizedBox(height: 16),
             AppTextField(controller: _facebookController, labelText: 'Facebook Profile URL'),
             const SizedBox(height: 32),
+            // --- NEW CODE START ---
+            OutlinedButton.icon(
+              icon: const Icon(Icons.lock_reset),
+              label: const Text('Change Password'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () {
+                context.push('/change-password');
+              },
+            ),
+            const SizedBox(height: 16),
+            // --- NEW CODE END ---
             AppButton(text: 'Save Changes', onPressed: _saveProfile),
           ],
         ),
