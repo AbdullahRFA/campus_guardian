@@ -20,6 +20,30 @@ class DatabaseService {
     await userCollection.doc(uid).set(userData, SetOptions(merge: true));
   }
 
+  // --- NEW METHOD: Get Booked Slots for a Date ---
+  Future<List<String>> getBookedSlots(String mentorId, String date) async {
+    try {
+      final snapshot = await sessionCollection
+          .where('mentorId', isEqualTo: mentorId)
+          .where('sessionDate', isEqualTo: date)
+          .get();
+
+      List<String> bookedSlots = [];
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        // If the session is NOT cancelled, the slot is considered busy
+        if (data['status'] != 'cancelled') {
+          bookedSlots.add(data['sessionTime'] as String);
+        }
+      }
+      return bookedSlots;
+    } catch (e) {
+      print("Error fetching booked slots: $e");
+      return [];
+    }
+  }
+
   Future<void> bookSession({
     required String mentorId,
     required String menteeId,
@@ -27,6 +51,7 @@ class DatabaseService {
     required String menteeName,
     required String sessionTime,
     required String sessionTopic,
+    required String sessionDate, // UPDATED: Accept specific date
   }) async {
     await sessionCollection.add({
       'mentorId': mentorId,
@@ -35,7 +60,7 @@ class DatabaseService {
       'menteeName': menteeName,
       'sessionTime': sessionTime,
       'sessionTopic': sessionTopic,
-      'sessionDate': DateTime.now().toIso8601String().split('T').first,
+      'sessionDate': sessionDate, // UPDATED: Use passed date
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
       'participants': [mentorId, menteeId],
