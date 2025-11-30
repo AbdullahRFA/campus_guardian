@@ -87,7 +87,6 @@ class DatabaseService {
     });
   }
 
-  // NEW: Update an existing post
   Future<void> updatePost({
     required String postId,
     required String title,
@@ -101,7 +100,6 @@ class DatabaseService {
     });
   }
 
-  // NEW: Delete a post
   Future<void> deletePost(String postId) async {
     await postCollection.doc(postId).delete();
   }
@@ -220,7 +218,7 @@ class DatabaseService {
     await exchangePostCollection.doc(postId).update({'status': newStatus});
   }
 
-  // --- CHAT MESSAGING ---
+  // --- CHAT MESSAGING (UPDATED) ---
 
   Future<void> sendPrivateMessage( {
     required String chatId,
@@ -244,55 +242,72 @@ class DatabaseService {
     final senderDoc = await userCollection.doc(senderId).get();
     final senderName =
         (senderDoc.data() as Map<String, dynamic>)['fullName'] ?? 'A User';
+    final senderPic = (senderDoc.data() as Map<String, dynamic>)['profilePicUrl'];
+
     final receiverDoc = await userCollection.doc(receiverId).get();
     final receiverName =
         (receiverDoc.data() as Map<String, dynamic>)['fullName'] ??
-        'Another User';
+            'Another User';
+    final receiverPic = (receiverDoc.data() as Map<String, dynamic>)['profilePicUrl'];
 
     // 3. Create/update the chat link for both users so it appears in their inbox
     final timestamp = FieldValue.serverTimestamp();
 
-    // Set the link for the sender
+    // Set the link for the SENDER (Reset unread count)
     await userCollection
         .doc(senderId)
         .collection('user_chats')
         .doc(receiverId)
         .set({
-          'chatId': chatId,
-          'otherUserId': receiverId,
-          'otherUserName': receiverName,
-          'lastActivity': timestamp,
-        }, SetOptions(merge: true));
+      'chatId': chatId,
+      'otherUserId': receiverId,
+      'otherUserName': receiverName,
+      'otherUserProfilePic': receiverPic,
+      'lastMessage': text, // Added lastMessage
+      'lastActivity': timestamp,
+      'unreadCount': 0, // Reset to 0 for sender
+    }, SetOptions(merge: true));
 
-    // Set the link for the receiver
+    // Set the link for the RECEIVER (Increment unread count)
     await userCollection
         .doc(receiverId)
         .collection('user_chats')
         .doc(senderId)
         .set({
-          'chatId': chatId,
-          'otherUserId': senderId,
-          'otherUserName': senderName,
-          'lastActivity': timestamp,
-        }, SetOptions(merge: true));
+      'chatId': chatId,
+      'otherUserId': senderId,
+      'otherUserName': senderName,
+      'otherUserProfilePic': senderPic,
+      'lastMessage': text, // Added lastMessage
+      'lastActivity': timestamp,
+      'unreadCount': FieldValue.increment(1), // INCREMENT for receiver
+    }, SetOptions(merge: true));
+  }
+
+  // NEW HELPER: Mark chat as read
+  Future<void> markChatAsRead(String currentUserId, String otherUserId) async {
+    try {
+      await userCollection
+          .doc(currentUserId)
+          .collection('user_chats')
+          .doc(otherUserId)
+          .update({'unreadCount': 0});
+    } catch (e) {
+      // Handle error or ignore if doc doesn't exist yet
+    }
   }
 
   // --- SEARCH HELPERS ---
 
-  // Fetch all mentors
   Future<QuerySnapshot> getAllMentors() async {
     return await userCollection.where('isMentorAvailable', isEqualTo: true).get();
   }
 
-  // Fetch all knowledge hub posts
   Future<QuerySnapshot> getAllPosts() async {
     return await postCollection.orderBy('createdAt', descending: true).get();
   }
 
-  // Fetch all skill exchange posts
   Future<QuerySnapshot> getAllExchangePosts() async {
     return await exchangePostCollection.where('status', isEqualTo: 'open').get();
   }
-
-
 }

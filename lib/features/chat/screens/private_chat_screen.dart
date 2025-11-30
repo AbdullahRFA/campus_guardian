@@ -1,10 +1,11 @@
-// features/chat/screens/private_chat_screen.dart
+// lib/features/chat/screens/private_chat_screen.dart
 
+import 'dart:async'; // Required for StreamSubscription
 import 'package:campus_guardian/services/database_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Ensure you have the intl package
+import 'package:intl/intl.dart';
 
 class PrivateChatScreen extends StatefulWidget {
   final String chatId;
@@ -25,9 +26,33 @@ class PrivateChatScreen extends StatefulWidget {
 class _PrivateChatScreenState extends State<PrivateChatScreen> {
   final _messageController = TextEditingController();
   final String _currentUserId = FirebaseAuth.instance.currentUser!.uid;
+  StreamSubscription? _messageSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // 1. Mark as read immediately when opening the screen
+    DatabaseService().markChatAsRead(_currentUserId, widget.receiverId);
+
+    // 2. Listen to the chat stream to mark messages as read in real-time
+    // (This prevents the "unread" badge from appearing if you are looking at the screen when a message arrives)
+    _messageSubscription = FirebaseFirestore.instance
+        .collection('private_chats')
+        .doc(widget.chatId)
+        .collection('messages')
+        .snapshots()
+        .listen((event) {
+      // Only verify if there are actually changes to avoid redundant calls
+      if (event.docChanges.isNotEmpty) {
+        DatabaseService().markChatAsRead(_currentUserId, widget.receiverId);
+      }
+    });
+  }
 
   @override
   void dispose() {
+    // Cancel the listener to prevent memory leaks
+    _messageSubscription?.cancel();
     _messageController.dispose();
     super.dispose();
   }
@@ -56,7 +81,7 @@ class _PrivateChatScreenState extends State<PrivateChatScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface, // Clean background
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
         elevation: 1,
@@ -86,7 +111,7 @@ class _PrivateChatScreenState extends State<PrivateChatScreen> {
                     ),
                   ),
                   Text(
-                    'Online', // Placeholder for status
+                    'Online', // Placeholder for online status
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.green,
                     ),
@@ -150,7 +175,7 @@ class _PrivateChatScreenState extends State<PrivateChatScreen> {
   Widget _buildMessageBubble({
     required String text,
     required bool isMe,
-    required Timestamp? timestamp
+    required Timestamp? timestamp,
   }) {
     final theme = Theme.of(context);
     final timeText = _formatTime(timestamp);

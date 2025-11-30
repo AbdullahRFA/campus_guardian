@@ -1,15 +1,14 @@
-// features/chat/screens/chat_inbox_screen.dart
-
+import 'package:campus_guardian/services/database_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart'; // Add intl package for date formatting
+import 'package:intl/intl.dart';
 
 class ChatInboxScreen extends StatelessWidget {
   const ChatInboxScreen({super.key});
 
-  // Helper to format the timestamp to something like "10:30 AM" or "Yesterday"
+  /// Helper to format the timestamp
   String _formatTimestamp(Timestamp? timestamp) {
     if (timestamp == null) return '';
     final now = DateTime.now();
@@ -17,11 +16,11 @@ class ChatInboxScreen extends StatelessWidget {
     final diff = now.difference(date);
 
     if (diff.inDays == 0) {
-      return DateFormat.jm().format(date); // 10:30 AM
+      return DateFormat.jm().format(date);
     } else if (diff.inDays == 1) {
       return 'Yesterday';
     } else {
-      return DateFormat.MMMd().format(date); // Oct 24
+      return DateFormat.MMMd().format(date);
     }
   }
 
@@ -31,29 +30,19 @@ class ChatInboxScreen extends StatelessWidget {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
     if (currentUserId == null) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock_outline, size: 64, color: Colors.grey[400]),
-              const SizedBox(height: 16),
-              Text(
-                'Please log in to see your messages.',
-                style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
-              ),
-            ],
-          ),
-        ),
+      return const Scaffold(
+        body: Center(child: Text('Please log in to see your messages.')),
       );
     }
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface, // Use theme background
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: const Text('Messages', style: TextStyle(fontWeight: FontWeight.bold)),
-        elevation: 0, // Clean flat look
-        centerTitle: false, // Modern left-aligned title
+        elevation: 0,
+        centerTitle: false,
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -66,9 +55,13 @@ class ChatInboxScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
           if (snapshot.hasError) {
-            return Center(child: Text('Error loading chats', style: TextStyle(color: theme.colorScheme.error)));
+            debugPrint("Chat Error: ${snapshot.error}"); // DEBUG PRINT
+            return Center(
+                child: Text('Error loading chats', style: TextStyle(color: theme.colorScheme.error)));
           }
+
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return _buildEmptyState(context);
           }
@@ -76,19 +69,38 @@ class ChatInboxScreen extends StatelessWidget {
           final chatDocs = snapshot.data!.docs;
 
           return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: chatDocs.length,
-            separatorBuilder: (context, index) => const Divider(height: 1, indent: 80), // Modern divider
+            separatorBuilder: (ctx, i) => const Divider(height: 1, indent: 80),
             itemBuilder: (context, index) {
-              final chatData = chatDocs[index].data() as Map<String, dynamic>;
-              final String chatId = chatData['chatId'];
-              final String otherUserId = chatData['otherUserId'];
-              final String otherUserName = chatData['otherUserName'] ?? 'Unknown User';
-              final Timestamp? lastActivity = chatData['lastActivity'];
-              // If you saved the 'lastMessage' text in your database, fetch it here.
-              // For now, we will use a placeholder if it doesn't exist.
-              final String lastMessage = chatData['lastMessage'] ?? 'Tap to open conversation';
-              final String? profilePicUrl = chatData['otherUserProfilePic']; // Assuming you might have this
+              final data = chatDocs[index].data() as Map<String, dynamic>;
+
+              // --- DEBUGGING SECTION START ---
+              // Look at your "Run" console for this output!
+              debugPrint("Chat Data for ${data['otherUserName']}: $data");
+              // --- DEBUGGING SECTION END ---
+
+              // Extract Data safely
+              final String chatId = data['chatId'] ?? '';
+              final String otherUserId = data['otherUserId'] ?? '';
+              final String otherUserName = data['otherUserName'] ?? 'User';
+              final String lastMessage = data['lastMessage'] ?? 'Tap to view';
+              final Timestamp? lastActivity = data['lastActivity'];
+              final String? profilePic = data['otherUserProfilePic'];
+
+              // 1. Super-Safe Unread Count Logic
+              // This handles Int, String, Double, or Null to prevent any crash or 0 result
+              var rawCount = data['unreadCount'];
+              int unreadCount = 0;
+
+              if (rawCount is int) {
+                unreadCount = rawCount;
+              } else if (rawCount is String) {
+                unreadCount = int.tryParse(rawCount) ?? 0;
+              } else if (rawCount is double) {
+                unreadCount = rawCount.toInt();
+              }
+
+              final bool hasUnread = unreadCount > 0;
 
               return InkWell(
                 onTap: () {
@@ -98,7 +110,9 @@ class ChatInboxScreen extends StatelessWidget {
                       'receiverId': otherUserId,
                       'receiverName': otherUserName,
                     },
-                  );
+                  ).then((_) {
+                    DatabaseService().markChatAsRead(currentUserId, otherUserId);
+                  });
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -110,10 +124,10 @@ class ChatInboxScreen extends StatelessWidget {
                         child: CircleAvatar(
                           radius: 28,
                           backgroundColor: theme.colorScheme.primaryContainer,
-                          backgroundImage: profilePicUrl != null && profilePicUrl.isNotEmpty
-                              ? NetworkImage(profilePicUrl)
+                          backgroundImage: profilePic != null && profilePic.isNotEmpty
+                              ? NetworkImage(profilePic)
                               : null,
-                          child: profilePicUrl == null || profilePicUrl.isEmpty
+                          child: (profilePic == null || profilePic.isEmpty)
                               ? Text(
                             otherUserName.isNotEmpty ? otherUserName[0].toUpperCase() : '?',
                             style: TextStyle(
@@ -126,6 +140,7 @@ class ChatInboxScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 16),
+
                       // Content
                       Expanded(
                         child: Column(
@@ -137,31 +152,60 @@ class ChatInboxScreen extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     otherUserName,
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
                                   ),
                                 ),
                                 if (lastActivity != null)
                                   Text(
                                     _formatTimestamp(lastActivity),
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: Colors.grey[600],
+                                      color: hasUnread ? theme.colorScheme.primary : Colors.grey[600],
+                                      fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
                                     ),
                                   ),
                               ],
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              lastMessage,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: Colors.grey[600],
-                                height: 1.2,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    lastMessage,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: hasUnread ? theme.colorScheme.onSurface : Colors.grey[600],
+                                      fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                                // 2. Robust Badge Rendering
+                                if (hasUnread)
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary, // Should be blue/primary color
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    constraints: const BoxConstraints(minWidth: 20),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      unreadCount > 99 ? '99+' : unreadCount.toString(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ],
                         ),
@@ -195,23 +239,7 @@ class ChatInboxScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          Text(
-            'No Messages Yet',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: Text(
-              'Start a conversation by proposing a skill exchange or booking a mentorship session.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
-            ),
-          ),
+          Text('No Messages Yet', style: Theme.of(context).textTheme.headlineSmall),
         ],
       ),
     );
