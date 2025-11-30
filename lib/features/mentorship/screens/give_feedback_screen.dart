@@ -38,8 +38,12 @@ class _GiveFeedbackScreenState extends State<GiveFeedbackScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Thank you for your feedback!'), backgroundColor: Colors.green),
         );
-        // MODIFICATION: Redirect to the sessions page instead of just popping.
-        context.push('/app/sessions');
+
+        // --- CRITICAL FIX START ---
+        // Use context.go() to switch tabs/routes.
+        // context.push() creates a duplicate ShellRoute which causes the GlobalKey crash.
+        context.go('/app/sessions');
+        // --- CRITICAL FIX END ---
       }
     } catch (e) {
       if (mounted) {
