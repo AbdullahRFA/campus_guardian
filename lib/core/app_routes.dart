@@ -2,6 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+//Splash Cress
+import 'package:campus_guardian/features/splash/splash_screen.dart';
+
+
+
 // Auth
 import 'package:campus_guardian/features/auth/screens/auth_gate.dart';
 import 'package:campus_guardian/features/auth/screens/login_screen.dart';
@@ -119,8 +124,12 @@ class AppRoutes {
   AppRoutes._();
 
   static final router = GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       // Top-level auth routes
       GoRoute(path: '/', builder: (context, state) => const AuthGate()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),

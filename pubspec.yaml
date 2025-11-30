@@ -74,7 +74,22 @@ dev_dependencies:
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
-# The following section is specific to Flutter packages.
+#
+
+
+#splash scree
+flutter_native_splash:
+  color: "#FFFFFF" # Background color
+  image: assets/images/logo.png # Your logo path
+  branding: assets/images/logo.png # Optional branding image (bottom of screen)
+  color_dark: "#121212" # Dark mode background color
+  image_dark: assets/images/logo.png # Dark mode logo
+
+  android_12:
+    image: assets/images/logo.png
+    color: "#FFFFFF"
+
+
 flutter:
 
   # The following line ensures that the Material Icons font is
