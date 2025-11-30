@@ -222,7 +222,7 @@ class DatabaseService {
 
   // --- CHAT MESSAGING ---
 
-  Future<void> sendPrivateMessage({
+  Future<void> sendPrivateMessage( {
     required String chatId,
     required String text,
     required String senderId,
