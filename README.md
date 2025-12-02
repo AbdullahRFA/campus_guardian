@@ -71,8 +71,8 @@ A peer-to-peer marketplace for learning.
 
 ## 📸 Screenshots
 
-| Login-1 | Splash-2 |
-|---------------|--------------|
+| Splash Screen-1                             | Login-2                           |
+|---------------------------------------------|-----------------------------------|
 | ![](/assets/Screenshot/splash%20screen.jpg) | ![](/assets/Screenshot/login.jpg) |
 
 | Sign Up-3  | Reset Password-4 |
