@@ -193,7 +193,36 @@ lib/
 ├── services/           # Firebase & API services
 └── widgets/            # Reusable UI components
 ```
+-----
+### 🚀 Future Improvements
 
+**🔔 Notifications & Real-Time Updates**
+* **Push Notifications:** Implement Firebase Cloud Messaging (FCM) to notify users of new messages, session bookings, and replies. (Currently, the `NotificationService` is drafted but not fully integrated).
+* **In-App Alerts:** Add a notification center to view past alerts and updates.
+
+**💬 Enhanced Chat Features**
+* **Media Sharing:** Allow users to send images, documents, and voice notes in private chats (currently text-only).
+* **Typing Indicators:** Add real-time "User is typing..." indicators in private 1-on-1 chats.
+* **Group Chats:** Enable group conversations for study groups or project teams.
+
+**🤖 AI Bot Enhancements**
+* **Contextual Memory:** Update `AiBotService` to send the conversation history to the Gemini API, allowing the bot to remember previous context within a session.
+* **Custom Personas:** Allow the bot to switch "modes" (e.g., "Career Counselor," "Academic Advisor," "Code Reviewer").
+
+**📅 Advanced Mentorship**
+* **Video Integration:** Integrate Jitsi or Agora for in-app video/audio calls during mentorship sessions.
+* **Calendar Sync:** Integrate with Google Calendar or Outlook to automatically add booked sessions to the user's personal calendar.
+* **Session Reminders:** automated reminders 15 minutes before a session starts.
+
+**🎨 UI/UX & Customization**
+* **Dark Mode:** Implement a system-aware Dark Mode (currently hardcoded to `AppTheme.lightTheme`).
+* **Localization:** Add support for multiple languages (e.g., Bengali/English toggle) to serve a broader student base.
+* **Onboarding Flow:** Create a dedicated onboarding tutorial for new users to explain features like "Wisdom Credits."
+
+**🛠 Technical Optimizations**
+* **State Management:** Migrate complex screens from `setState` to a more robust solution like Riverpod or Bloc for better scalability.
+* **Offline Support:** Optimize Firestore caching to allow users to view their schedule and saved posts while offline.
+* **Admin Panel:** Create a web-based admin panel to moderate posts, verify mentors, and manage reported content.
 -----
 
 ## 🤝 Contributing
